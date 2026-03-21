@@ -4,6 +4,9 @@ const cors = require('cors')
 const migrate = require('./src/db/migrate')
 
 const authRoutes = require('./src/routes/auth')
+const usersRoutes = require('./src/routes/users')
+const clubsRoutes = require('./src/routes/clubs')
+const postsRoutes = require('./src/routes/posts')
 
 const app = express()
 
@@ -14,10 +17,11 @@ app.use(cors({
 }))
 app.use(express.json())
 
-// Rutas
 app.use('/api/auth', authRoutes)
+app.use('/api/users', usersRoutes)
+app.use('/api/clubs', clubsRoutes)
+app.use('/api/posts', postsRoutes)
 
-// Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }))
 
 const PORT = process.env.PORT || 3001
