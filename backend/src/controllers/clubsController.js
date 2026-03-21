@@ -15,7 +15,7 @@ async function getClubs(req, res) {
       WHERE 1=1`
     const values = []
     if (provincia) { query += ` AND c.provincia = $1`; values.push(provincia) }
-    query += ` GROUP BY c.id ORDER BY (posts_semana + eventos_semana) DESC, miembros DESC`
+    query += ` GROUP BY c.id ORDER BY (COUNT(DISTINCT p.id) FILTER (WHERE p.created_at > NOW() - INTERVAL '7 days') + COUNT(DISTINCT e.id) FILTER (WHERE e.created_at > NOW() - INTERVAL '7 days')) DESC, COUNT(DISTINCT cm.id) FILTER (WHERE cm.estado = 'activo') DESC`
     const result = await pool.query(query, values)
     res.json(result.rows)
   } catch (err) {
