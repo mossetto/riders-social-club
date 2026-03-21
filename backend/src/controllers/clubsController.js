@@ -12,7 +12,7 @@ async function getClubs(req, res) {
       LEFT JOIN club_members cm ON cm.club_id = c.id
       LEFT JOIN posts p ON p.club_id = c.id
       LEFT JOIN events e ON e.club_id = c.id
-      WHERE c.tipo = 'publico'`
+      WHERE 1=1`
     const values = []
     if (provincia) { query += ` AND c.provincia = $1`; values.push(provincia) }
     query += ` GROUP BY c.id ORDER BY (posts_semana + eventos_semana) DESC, miembros DESC`
@@ -114,4 +114,25 @@ async function updateMember(req, res) {
   }
 }
 
-module.exports = { getClubs, getClub, createClub, joinClub, updateMember }
+async function getMyClubes(req, res) {
+  try {
+    const result = await pool.query(
+      `SELECT c.*, cm.rol,
+        COUNT(DISTINCT p.id) FILTER (WHERE p.created_at > NOW() - INTERVAL '7 days') as posts_semana,
+        COUNT(DISTINCT mem.id) FILTER (WHERE mem.estado = 'activo') as miembros
+       FROM clubs c
+       JOIN club_members cm ON cm.club_id = c.id AND cm.user_id = $1 AND cm.estado = 'activo'
+       LEFT JOIN posts p ON p.club_id = c.id
+       LEFT JOIN club_members mem ON mem.club_id = c.id
+       GROUP BY c.id, cm.rol
+       ORDER BY c.nombre`,
+      [req.user.id]
+    )
+    res.json(result.rows)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Error interno' })
+  }
+}
+
+module.exports = { getClubs, getClub, createClub, joinClub, updateMember, getMyClubes }

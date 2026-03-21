@@ -15,12 +15,10 @@ export default function MisClubes() {
     setLoading(true)
     try {
       const [clubsRes, postsRes] = await Promise.all([
-        api.get('/clubs?mios=1'),
+        api.get('/clubs/mine'),
         getClubsFeed()
       ])
-      // Extraer clubes únicos de los posts o del perfil
-      const { data: me } = await api.get('/users/me')
-      setClubes(me.clubes || [])
+      setClubes(clubsRes.data)
       setPosts(postsRes.data)
     } catch {}
     setLoading(false)
@@ -33,7 +31,7 @@ export default function MisClubes() {
 
   if (loading) return <div className="loading">Cargando...</div>
 
-  if (!clubes || clubes.length === 0) {
+  if (clubes.length === 0) {
     return (
       <div className="page">
         <div className="empty-clubes">
@@ -58,6 +56,7 @@ export default function MisClubes() {
             <div className="mi-club-info">
               <span className="mi-club-nombre">{c.nombre}</span>
               <span className="mi-club-rol">{c.rol}</span>
+              <span className="mi-club-stats">{c.miembros} miembros · {c.posts_semana} posts esta semana</span>
             </div>
           </Link>
         ))}
@@ -66,7 +65,7 @@ export default function MisClubes() {
       <h3 className="feed-section-title">Feed de mis clubes</h3>
 
       {posts.length === 0
-        ? <p className="empty">No hay publicaciones en tus clubes esta semana.</p>
+        ? <p className="empty">No hay publicaciones en tus clubes aún.</p>
         : posts.map(p => <PostCard key={p.id} post={p} onDelete={handleDelete} />)
       }
     </div>

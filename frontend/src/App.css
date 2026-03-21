@@ -174,6 +174,7 @@ button { cursor: pointer; font-family: inherit; }
 .mi-club-info { display: flex; flex-direction: column; }
 .mi-club-nombre { font-size: 0.85rem; font-weight: 600; }
 .mi-club-rol { font-size: 0.72rem; color: var(--purple-mid); margin-top: 1px; }
+.mi-club-stats { font-size: 0.7rem; color: var(--text3); margin-top: 2px; }
 .feed-section-title { font-size: 0.85rem; color: var(--text2); font-weight: 500; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 0.5px solid var(--border); }
 
 @media (max-width: 480px) {

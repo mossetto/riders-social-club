@@ -78,8 +78,15 @@ export default function Club() {
 
       {tab === 'feed' && (
         <div>
-          {canPost && <CreatePost onCreated={loadPosts} clubId={id} />}
-          {posts.map(p => <PostCard key={p.id} post={p} onDelete={async (pid) => { await deletePost(pid); loadPosts() }} />)}
+          {!myRole && club.tipo === 'privado'
+            ? <p className="empty">Este club es privado. Solicitá ingreso para ver las publicaciones.</p>
+            : <>
+                {canPost && <CreatePost onCreated={loadPosts} clubId={id} />}
+                {posts.length === 0
+                  ? <p className="empty">No hay publicaciones aún.</p>
+                  : posts.map(p => <PostCard key={p.id} post={p} onDelete={async (pid) => { await deletePost(pid); loadPosts() }} />)}
+              </>
+          }
         </div>
       )}
 
