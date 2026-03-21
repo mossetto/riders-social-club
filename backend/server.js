@@ -1,6 +1,7 @@
 require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
+const migrate = require('./src/db/migrate')
 
 const authRoutes = require('./src/routes/auth')
 
@@ -19,6 +20,7 @@ app.use('/api/auth', authRoutes)
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }))
 
 const PORT = process.env.PORT || 3001
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Backend corriendo en puerto ${PORT}`)
+  await migrate()
 })
