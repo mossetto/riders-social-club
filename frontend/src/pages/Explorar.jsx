@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react'
 import ClubCard from '../components/ClubCard'
 import { getClubs } from '../api/clubs'
+import { useAuth } from '../context/AuthContext'
+import api from '../api/axiosInstance'
 
 const PROVINCIAS = ['Buenos Aires','CABA','Córdoba','Santa Fe','Mendoza','Tucumán','Salta','Neuquén','Río Negro','Chubut','Santa Cruz','Tierra del Fuego','Entre Ríos','Corrientes','Misiones','Chaco','Formosa','Santiago del Estero','La Rioja','Catamarca','San Juan','San Luis','La Pampa','Jujuy']
 
 export default function Explorar() {
+  const { user } = useAuth()
   const [clubs, setClubs] = useState([])
+  const [misClubIds, setMisClubIds] = useState([])
   const [provincia, setProvincia] = useState('')
   const [loading, setLoading] = useState(true)
 
@@ -14,8 +18,11 @@ export default function Explorar() {
   async function load() {
     setLoading(true)
     try {
-      const { data } = await getClubs(provincia)
-      setClubs(data)
+      const promises = [getClubs(provincia)]
+      if (user) promises.push(api.get('/clubs/mine'))
+      const results = await Promise.all(promises)
+      setClubs(results[0].data)
+      if (user) setMisClubIds(results[1].data.map(c => c.id))
     } catch {}
     setLoading(false)
   }
@@ -31,8 +38,15 @@ export default function Explorar() {
       </div>
       {loading ? <div className="loading">Cargando...</div> : (
         clubs.length === 0
-          ? <p className="empty">No hay clubes en esta provincia</p>
-          : clubs.map(c => <ClubCard key={c.id} club={c} onJoin={load} />)
+          ? <p className="empty">No hay clubes todavía</p>
+          : clubs.map(c => (
+              <ClubCard
+                key={c.id}
+                club={c}
+                isMember={misClubIds.includes(c.id)}
+                onJoin={load}
+              />
+            ))
       )}
     </div>
   )

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getClub, joinClub, getClubEvents, getRoutes } from '../api/clubs'
+import { getClub, joinClub, getClubEvents, getRoutes, createEvent, addRoute } from '../api/clubs'
 import { useAuth } from '../context/AuthContext'
 import PostCard from '../components/PostCard'
 import CreatePost from '../components/CreatePost'
@@ -15,6 +15,16 @@ export default function Club() {
   const [routes, setRoutes] = useState([])
   const [tab, setTab] = useState('feed')
   const [joined, setJoined] = useState(false)
+
+  // Crear evento
+  const [showEventForm, setShowEventForm] = useState(false)
+  const [eventForm, setEventForm] = useState({ titulo: '', descripcion: '', fecha_salida: '', punto_encuentro: '', destino: '', ruta_id: '' })
+  const [savingEvent, setSavingEvent] = useState(false)
+
+  // Agregar ruta
+  const [showRouteModal, setShowRouteModal] = useState(false)
+  const [routeForm, setRouteForm] = useState({ nombre: '', descripcion: '', maps_url: '' })
+  const [savingRoute, setSavingRoute] = useState(false)
 
   useEffect(() => { loadAll() }, [id])
 
@@ -49,10 +59,41 @@ export default function Club() {
     } catch {}
   }
 
+  async function handleCreateEvent(e) {
+    e.preventDefault()
+    setSavingEvent(true)
+    try {
+      await createEvent(id, {
+        ...eventForm,
+        ruta_id: eventForm.ruta_id || undefined
+      })
+      setShowEventForm(false)
+      setEventForm({ titulo: '', descripcion: '', fecha_salida: '', punto_encuentro: '', destino: '', ruta_id: '' })
+      const res = await getClubEvents(id)
+      setEvents(res.data)
+    } catch {}
+    setSavingEvent(false)
+  }
+
+  async function handleAddRoute(e) {
+    e.preventDefault()
+    setSavingRoute(true)
+    try {
+      await addRoute(id, routeForm)
+      setShowRouteModal(false)
+      setRouteForm({ nombre: '', descripcion: '', maps_url: '' })
+      const res = await getRoutes(id)
+      setRoutes(res.data)
+    } catch {}
+    setSavingRoute(false)
+  }
+
   if (!club) return <div className="loading">Cargando...</div>
 
   const myRole = club.members?.find(m => m.id === user?.id)?.rol
   const canPost = ['fundador','organizador','colaborador','miembro'].includes(myRole)
+  const canCreateEvent = ['fundador','organizador','colaborador'].includes(myRole)
+  const canAddRoute = !!myRole
 
   return (
     <div className="page">
@@ -92,12 +133,83 @@ export default function Club() {
 
       {tab === 'eventos' && (
         <div>
+          {canCreateEvent && (
+            <div style={{ marginBottom: '1rem' }}>
+              {!showEventForm
+                ? <button className="btn-primary" onClick={() => setShowEventForm(true)}>+ Crear salida</button>
+                : (
+                  <form className="form-card" onSubmit={handleCreateEvent}>
+                    <h3 style={{ marginBottom: '1rem' }}>Nueva salida</h3>
+                    <input
+                      className="input"
+                      placeholder="Título *"
+                      value={eventForm.titulo}
+                      onChange={e => setEventForm(f => ({ ...f, titulo: e.target.value }))}
+                      required
+                    />
+                    <label className="input-label">Fecha y hora *</label>
+                    <input
+                      className="input"
+                      type="datetime-local"
+                      value={eventForm.fecha_salida}
+                      onChange={e => setEventForm(f => ({ ...f, fecha_salida: e.target.value }))}
+                      required
+                    />
+                    <textarea
+                      className="input"
+                      placeholder="Descripción (opcional)"
+                      rows={3}
+                      value={eventForm.descripcion}
+                      onChange={e => setEventForm(f => ({ ...f, descripcion: e.target.value }))}
+                    />
+                    <input
+                      className="input"
+                      placeholder="Punto de encuentro (opcional)"
+                      value={eventForm.punto_encuentro}
+                      onChange={e => setEventForm(f => ({ ...f, punto_encuentro: e.target.value }))}
+                    />
+                    <input
+                      className="input"
+                      placeholder="Destino (opcional)"
+                      value={eventForm.destino}
+                      onChange={e => setEventForm(f => ({ ...f, destino: e.target.value }))}
+                    />
+                    {routes.length > 0 && (
+                      <>
+                        <label className="input-label">Ruta del club (opcional)</label>
+                        <select
+                          className="input"
+                          value={eventForm.ruta_id}
+                          onChange={e => setEventForm(f => ({ ...f, ruta_id: e.target.value }))}
+                        >
+                          <option value="">Sin ruta</option>
+                          {routes.map(r => (
+                            <option key={r.id} value={r.id}>{r.nombre}</option>
+                          ))}
+                        </select>
+                      </>
+                    )}
+                    <div className="form-actions">
+                      <button type="submit" className="btn-primary" disabled={savingEvent}>
+                        {savingEvent ? 'Guardando...' : 'Crear salida'}
+                      </button>
+                      <button type="button" className="btn-secondary" onClick={() => setShowEventForm(false)}>Cancelar</button>
+                    </div>
+                  </form>
+                )
+              }
+            </div>
+          )}
+
           {events.length === 0 ? <p className="empty">No hay salidas programadas</p> : events.map(e => (
             <div key={e.id} className="event-card">
               <h3>{e.titulo}</h3>
               <p className="event-date">{new Date(e.fecha_salida).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</p>
-              {e.punto_encuentro && <p>📍 {e.punto_encuentro} → {e.destino}</p>}
+              {e.punto_encuentro && <p>📍 {e.punto_encuentro}{e.destino ? ` → ${e.destino}` : ''}</p>}
               {e.descripcion && <p>{e.descripcion}</p>}
+              {e.ruta && (
+                <p className="event-ruta-tag">🗺️ Ruta: {e.ruta.nombre}</p>
+              )}
               {e.ruta_url && (
                 <div className="map-embed">
                   <iframe src={`https://maps.google.com/maps?q=${encodeURIComponent(e.ruta_url)}&output=embed`} title="ruta" />
@@ -110,12 +222,70 @@ export default function Club() {
 
       {tab === 'rutas' && (
         <div>
+          {canAddRoute && (
+            <div style={{ marginBottom: '1rem' }}>
+              <button className="btn-primary" onClick={() => setShowRouteModal(true)}>+ Agregar ruta</button>
+            </div>
+          )}
+
+          {showRouteModal && (
+            <div className="modal-overlay" onClick={() => setShowRouteModal(false)}>
+              <div className="modal-card" onClick={e => e.stopPropagation()}>
+                <h3 style={{ marginBottom: '1rem' }}>Agregar ruta</h3>
+                <form onSubmit={handleAddRoute}>
+                  <input
+                    className="input"
+                    placeholder="Nombre de la ruta *"
+                    value={routeForm.nombre}
+                    onChange={e => setRouteForm(f => ({ ...f, nombre: e.target.value }))}
+                    required
+                  />
+                  <textarea
+                    className="input"
+                    placeholder="Descripción (opcional)"
+                    rows={2}
+                    value={routeForm.descripcion}
+                    onChange={e => setRouteForm(f => ({ ...f, descripcion: e.target.value }))}
+                  />
+                  <textarea
+                    className="input"
+                    placeholder="Pegá acá el link de una ruta de Google Maps *"
+                    rows={3}
+                    value={routeForm.maps_url}
+                    onChange={e => setRouteForm(f => ({ ...f, maps_url: e.target.value }))}
+                    required
+                  />
+                  <div className="form-actions">
+                    <button type="submit" className="btn-primary" disabled={savingRoute}>
+                      {savingRoute ? 'Guardando...' : 'Agregar'}
+                    </button>
+                    <button type="button" className="btn-secondary" onClick={() => setShowRouteModal(false)}>Cancelar</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
           {routes.length === 0 ? <p className="empty">No hay rutas guardadas</p> : routes.map(r => (
             <div key={r.id} className="route-card">
-              <h3>{r.nombre}</h3>
-              {r.descripcion && <p>{r.descripcion}</p>}
+              <div className="route-header">
+                <div>
+                  <h3>{r.nombre}</h3>
+                  {r.descripcion && <p>{r.descripcion}</p>}
+                </div>
+                {r.agregada_por && (
+                  <div className="route-autor">
+                    <div className="avatar-sm">
+                      {r.agregada_por.avatar_url
+                        ? <img src={r.agregada_por.avatar_url} alt="" />
+                        : <span>{r.agregada_por.username?.slice(0,2).toUpperCase()}</span>}
+                    </div>
+                    <span className="route-autor-name">{r.agregada_por.username}</span>
+                  </div>
+                )}
+              </div>
               <div className="map-embed">
-                <iframe src={`${r.maps_url}&output=embed`} title={r.nombre} />
+                <iframe src={`${r.maps_url.includes('output=embed') ? r.maps_url : r.maps_url + (r.maps_url.includes('?') ? '&' : '?') + 'output=embed'}`} title={r.nombre} />
               </div>
             </div>
           ))}

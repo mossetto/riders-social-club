@@ -101,6 +101,20 @@ CREATE TABLE IF NOT EXISTS comments (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Migraciones aditivas (seguras de correr varias veces)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='routes' AND column_name='user_id') THEN
+    ALTER TABLE routes ADD COLUMN user_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='events' AND column_name='ruta_id') THEN
+    ALTER TABLE events ADD COLUMN ruta_id INTEGER REFERENCES routes(id) ON DELETE SET NULL;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='events' AND column_name='user_id') THEN
+    ALTER TABLE events ADD COLUMN user_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
+  END IF;
+END $$;
+
 -- Índices para performance
 CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id);
 CREATE INDEX IF NOT EXISTS idx_posts_club_id ON posts(club_id);
