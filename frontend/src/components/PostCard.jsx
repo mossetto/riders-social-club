@@ -36,7 +36,9 @@ export default function PostCard({ post, onDelete }) {
           <span className="post-time">{timeAgo(post.created_at)}</span>
         </div>
         {user?.id === post.user.id && (
-          <button className="btn-delete" onClick={() => onDelete?.(post.id)}>×</button>
+          <button className="btn-delete" onClick={() => {
+            if (window.confirm('¿Eliminar esta publicación?')) onDelete?.(post.id)
+          }}>×</button>
         )}
       </div>
 

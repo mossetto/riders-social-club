@@ -1,9 +1,10 @@
-import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Navbar from './components/Navbar'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Home from './pages/Home'
+import MisClubes from './pages/MisClubes'
 import Explorar from './pages/Explorar'
 import Perfil from './pages/Perfil'
 import Club from './pages/Club'
@@ -23,14 +24,10 @@ function PublicRoute({ children }) {
 }
 
 function Layout({ children }) {
-  const { user } = useAuth()
   return (
     <>
       <Navbar />
       {children}
-      {user && (
-        <Link to="/crear-club" className="fab" title="Crear club">+</Link>
-      )}
     </>
   )
 }
@@ -43,6 +40,7 @@ export default function App() {
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
           <Route path="/" element={<Layout><Home /></Layout>} />
+          <Route path="/mis-clubes" element={<PrivateRoute><Layout><MisClubes /></Layout></PrivateRoute>} />
           <Route path="/explorar" element={<Layout><Explorar /></Layout>} />
           <Route path="/perfil/:id" element={<Layout><Perfil /></Layout>} />
           <Route path="/club/:id" element={<Layout><Club /></Layout>} />

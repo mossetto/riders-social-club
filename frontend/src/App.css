@@ -33,7 +33,7 @@ button { cursor: pointer; font-family: inherit; }
 .nav-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
 /* Layout */
-.page { max-width: 600px; margin: 0 auto; padding: 1rem; }
+.page { max-width: 780px; margin: 0 auto; padding: 1rem 1.5rem; }
 .page-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; }
 .loading { text-align: center; padding: 2rem; color: var(--text2); }
 .empty { text-align: center; padding: 2rem; color: var(--text3); }
@@ -162,8 +162,19 @@ button { cursor: pointer; font-family: inherit; }
 .member-row { display: flex; align-items: center; gap: 0.65rem; padding: 0.6rem 0; border-bottom: 0.5px solid var(--border); }
 .member-name { flex: 1; font-size: 0.9rem; }
 
-/* FAB */
-.fab { position: fixed; bottom: 1.5rem; right: 1.5rem; width: 52px; height: 52px; border-radius: 50%; background: var(--purple); color: #fff; border: none; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(83,74,183,0.4); z-index: 50; }
+/* Mis Clubes */
+.empty-clubes { text-align: center; padding: 3rem 1rem; }
+.empty-clubes p { color: var(--text2); margin-bottom: 1.25rem; font-size: 0.95rem; }
+.empty-clubes-actions { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+.mis-clubes-cards { display: flex; gap: 0.6rem; overflow-x: auto; padding-bottom: 0.75rem; margin-bottom: 1rem; scrollbar-width: none; }
+.mis-clubes-cards::-webkit-scrollbar { display: none; }
+.mi-club-card { display: flex; align-items: center; gap: 0.6rem; background: var(--bg2); border: 0.5px solid var(--border); border-radius: 10px; padding: 0.6rem 0.9rem; flex-shrink: 0; min-width: 160px; }
+.mi-club-escudo { width: 34px; height: 34px; border-radius: 7px; background: var(--purple); display: flex; align-items: center; justify-content: center; color: var(--purple-light); font-size: 11px; font-weight: 700; flex-shrink: 0; overflow: hidden; }
+.mi-club-escudo img { width: 100%; height: 100%; object-fit: cover; border-radius: 7px; }
+.mi-club-info { display: flex; flex-direction: column; }
+.mi-club-nombre { font-size: 0.85rem; font-weight: 600; }
+.mi-club-rol { font-size: 0.72rem; color: var(--purple-mid); margin-top: 1px; }
+.feed-section-title { font-size: 0.85rem; color: var(--text2); font-weight: 500; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 0.5px solid var(--border); }
 
 @media (max-width: 480px) {
   .page { padding: 0.75rem; }

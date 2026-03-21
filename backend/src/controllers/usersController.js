@@ -82,10 +82,14 @@ async function getMe(req, res) {
   try {
     const result = await pool.query(
       `SELECT u.id, u.email, u.username, u.bio, u.avatar_url, u.whatsapp, u.telegram, u.created_at,
-        row_to_json(m) as moto
+        row_to_json(m) as moto,
+        json_agg(DISTINCT jsonb_build_object('id', c.id, 'nombre', c.nombre, 'escudo_url', c.escudo_url, 'rol', cm.rol)) FILTER (WHERE c.id IS NOT NULL) as clubes
        FROM users u
        LEFT JOIN motos m ON m.user_id = u.id
-       WHERE u.id = $1`,
+       LEFT JOIN club_members cm ON cm.user_id = u.id AND cm.estado = 'activo'
+       LEFT JOIN clubs c ON c.id = cm.club_id
+       WHERE u.id = $1
+       GROUP BY u.id, m.id`,
       [req.user.id]
     )
     res.json(result.rows[0])

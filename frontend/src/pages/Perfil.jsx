@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { getProfile, updateProfile, addMoto } from '../api/users'
 import { useAuth } from '../context/AuthContext'
 
 export default function Perfil() {
   const { id } = useParams()
   const { user, logout } = useAuth()
+  const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
   const [editing, setEditing] = useState(false)
   const [editingMoto, setEditingMoto] = useState(false)
@@ -72,6 +73,7 @@ export default function Perfil() {
             <button className="btn-secondary" onClick={() => setEditingMoto(!editingMoto)}>
               {profile.motos?.[0] ? 'Editar moto' : 'Agregar moto'}
             </button>
+            <button className="btn-secondary" onClick={() => navigate('/crear-club')}>Crear club</button>
             <button className="btn-danger" onClick={logout}>Cerrar sesión</button>
           </div>
         )}
