@@ -7,8 +7,9 @@ const authRoutes = require('./src/routes/auth')
 
 const app = express()
 
+const allowedOrigin = (process.env.FRONTEND_URL || '').replace(/\/$/, '')
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
+  origin: allowedOrigin || '*',
   credentials: true,
 }))
 app.use(express.json())
