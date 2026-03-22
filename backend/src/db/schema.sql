@@ -170,6 +170,9 @@ CREATE TABLE IF NOT EXISTS event_participants (
   UNIQUE(event_id, user_id)
 );
 
+-- Normalizar es_publico: null → false
+UPDATE events SET es_publico = false WHERE es_publico IS NULL;
+
 -- Backfill: crear posts para eventos y rutas que no tienen post_id
 DO $$
 DECLARE
