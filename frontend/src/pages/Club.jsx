@@ -7,6 +7,18 @@ import PostCard, { LikesComments } from '../components/PostCard'
 import CreatePost from '../components/CreatePost'
 import { deletePost } from '../api/posts'
 
+function estadoEvento(fecha) {
+  const ahora = new Date()
+  const ev = new Date(fecha)
+  const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate())
+  const diaEv = new Date(ev.getFullYear(), ev.getMonth(), ev.getDate())
+  const diff = Math.round((diaEv - hoy) / (1000 * 60 * 60 * 24))
+  if (diff < 0) return { label: 'Concluido', color: 'var(--text2)' }
+  if (diff === 0) return { label: '¡Es hoy!', color: '#4caf50' }
+  if (diff === 1) return { label: 'Es mañana', color: '#4caf50' }
+  return { label: `En ${diff} días`, color: '#4caf50' }
+}
+
 function canDo(config, myRole) {
   if (!myRole) return false
   if (config === 'cualquiera') return true
@@ -302,7 +314,12 @@ export default function Club() {
                 <>
                   <div className="event-card-top">
                     <div style={{ flex: 1 }}>
-                      <h3>{ev.titulo}</h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <h3>{ev.titulo}</h3>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: estadoEvento(ev.fecha_salida).color }}>
+                          {estadoEvento(ev.fecha_salida).label}
+                        </span>
+                      </div>
                       <p className="event-date">{new Date(ev.fecha_salida).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</p>
                     </div>
                     {ev.creador && (
