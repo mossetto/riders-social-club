@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Navbar from './components/Navbar'
@@ -12,6 +13,7 @@ import CrearClub from './pages/CrearClub'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import ConfigurarClub from './pages/ConfigurarClub'
+import IntroScreen from './components/IntroScreen'
 import './App.css'
 
 function PrivateRoute({ children }) {
@@ -36,6 +38,17 @@ function Layout({ children }) {
 }
 
 export default function App() {
+  const [showIntro, setShowIntro] = useState(
+    () => !sessionStorage.getItem('introShown')
+  )
+
+  function handleIntroDone() {
+    sessionStorage.setItem('introShown', '1')
+    setShowIntro(false)
+  }
+
+  if (showIntro) return <IntroScreen onDone={handleIntroDone} />
+
   return (
     <AuthProvider>
       <BrowserRouter>

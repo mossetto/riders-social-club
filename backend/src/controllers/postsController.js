@@ -16,12 +16,24 @@ const POST_SELECT = `
     END as club,
     (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likes,
     (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comentarios,
-    row_to_json(m) as moto
+    row_to_json(m) as moto,
+    (SELECT id FROM events WHERE post_id = p.id LIMIT 1) as event_id,
+    (SELECT id FROM routes WHERE post_id = p.id LIMIT 1) as route_id,
+    CASE WHEN p.mention_event_id IS NOT NULL
+      THEN json_build_object('id', me.id, 'titulo', me.titulo, 'club_id', me.club_id)
+      ELSE NULL
+    END as mention_event,
+    CASE WHEN p.mention_route_id IS NOT NULL
+      THEN json_build_object('id', mr.id, 'nombre', mr.nombre, 'club_id', mr.club_id)
+      ELSE NULL
+    END as mention_route
   FROM posts p
   JOIN users u ON u.id = p.user_id
   LEFT JOIN motos m ON m.user_id = u.id
   LEFT JOIN clubs c ON c.id = p.club_id
-  LEFT JOIN club_members cm ON cm.club_id = p.club_id AND cm.user_id = p.user_id AND cm.estado = 'activo'`
+  LEFT JOIN club_members cm ON cm.club_id = p.club_id AND cm.user_id = p.user_id AND cm.estado = 'activo'
+  LEFT JOIN events me ON me.id = p.mention_event_id
+  LEFT JOIN routes mr ON mr.id = p.mention_route_id`
 
 async function getClubPosts(req, res) {
   try {
@@ -78,7 +90,7 @@ async function getClubsFeed(req, res) {
 }
 
 async function createPost(req, res) {
-  const { tipo, contenido, club_id } = req.body
+  const { tipo, contenido, club_id, mention_event_id, mention_route_id } = req.body
   const imagen_url = req.file?.path || null
   if (!contenido && !imagen_url) return res.status(400).json({ error: 'Contenido o imagen requerido' })
   try {
@@ -89,8 +101,8 @@ async function createPost(req, res) {
       if (!member.rows.length) return res.status(403).json({ error: 'No sos miembro del club' })
     }
     const result = await pool.query(
-      'INSERT INTO posts (user_id, club_id, tipo, contenido, imagen_url) VALUES ($1,$2,$3,$4,$5) RETURNING *',
-      [req.user.id, club_id || null, tipo || 'general', contenido, imagen_url])
+      'INSERT INTO posts (user_id, club_id, tipo, contenido, imagen_url, mention_event_id, mention_route_id) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *',
+      [req.user.id, club_id || null, tipo || 'general', contenido, imagen_url, mention_event_id || null, mention_route_id || null])
     res.status(201).json(result.rows[0])
   } catch (err) {
     console.error(err)

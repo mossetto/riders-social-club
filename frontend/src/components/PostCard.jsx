@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import BurbujaRider from './BurbujaRider'
 import { toggleLike } from '../api/posts'
 import { useAuth } from '../context/AuthContext'
@@ -7,6 +7,7 @@ import { timeAgo } from '../utils/timeAgo'
 
 export default function PostCard({ post, onDelete, showRol = false }) {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [likes, setLikes] = useState(Number(post.likes))
   const [liked, setLiked] = useState(false)
   const [showComments, setShowComments] = useState(false)
@@ -52,6 +53,20 @@ export default function PostCard({ post, onDelete, showRol = false }) {
       {post.contenido && <p className="post-content">{post.contenido}</p>}
       {post.imagen_url && <img src={post.imagen_url} className="post-img" alt="" />}
 
+      {(post.event_id || post.route_id) && post.club?.id && (
+        <button
+          className="btn-link"
+          style={{ fontSize: '0.82rem', marginBottom: '0.25rem' }}
+          onClick={() => {
+            const tab = post.event_id ? 'eventos' : 'rutas'
+            const highlight = post.event_id || post.route_id
+            navigate(`/club/${post.club.id}?tab=${tab}&highlight=${highlight}`)
+          }}
+        >
+          Ver Detalles →
+        </button>
+      )}
+
       <div className="post-actions">
         <button className={`action-btn ${liked ? 'liked' : ''}`} onClick={handleLike}>
           ♥ {likes}
@@ -59,6 +74,22 @@ export default function PostCard({ post, onDelete, showRol = false }) {
         <button className="action-btn" onClick={() => setShowComments(!showComments)}>
           💬 {post.comentarios}
         </button>
+        {post.mention_event && (
+          <Link
+            to={`/club/${post.mention_event.club_id}?tab=eventos&highlight=${post.mention_event.id}`}
+            className="mention-tag"
+          >
+            📅 {post.mention_event.titulo}
+          </Link>
+        )}
+        {post.mention_route && (
+          <Link
+            to={`/club/${post.mention_route.club_id}?tab=rutas&highlight=${post.mention_route.id}`}
+            className="mention-tag"
+          >
+            🗺️ {post.mention_route.nombre}
+          </Link>
+        )}
       </div>
 
       {showComments && <CommentsSection postId={post.id} />}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import ClubCard from '../components/ClubCard'
-import { getClubs, getPublicEvents } from '../api/clubs'
+import { getClubs, getPublicEvents, getMyClubsEvents, joinEvent, leaveEvent } from '../api/clubs'
 import { searchUsers, searchByMoto } from '../api/users'
 import { useAuth } from '../context/AuthContext'
 import api from '../api/axiosInstance'
@@ -29,13 +29,14 @@ export default function Explorar() {
 
   // Tab Eventos
   const [eventos, setEventos] = useState([])
+  const [misEventos, setMisEventos] = useState([])
   const [loadingEventos, setLoadingEventos] = useState(false)
   const [errorEventos, setErrorEventos] = useState('')
 
   useEffect(() => {
     if (tab === 'clubes') loadClubes()
     if (tab === 'eventos') loadEventos()
-  }, [tab])
+  }, [tab, user?.id])
 
   async function loadClubes() {
     setLoadingClubes(true)
@@ -53,8 +54,12 @@ export default function Explorar() {
     setLoadingEventos(true)
     setErrorEventos('')
     try {
-      const { data } = await getPublicEvents()
-      setEventos(data)
+      const [publicRes, mineRes] = await Promise.all([
+        getPublicEvents(),
+        user ? getMyClubsEvents().catch(() => ({ data: [] })) : Promise.resolve({ data: [] })
+      ])
+      setEventos(publicRes.data)
+      setMisEventos(mineRes.data)
     } catch (err) {
       setErrorEventos(err?.response?.data?.error || 'Error al cargar eventos')
     }
@@ -174,10 +179,28 @@ export default function Explorar() {
         <>
           {loadingEventos && <div className="loading">Cargando...</div>}
           {errorEventos && <p className="error" style={{ textAlign: 'center', padding: '1rem' }}>{errorEventos}</p>}
-          {!loadingEventos && !errorEventos && eventos.length === 0 && (
-            <p className="empty">No hay eventos públicos</p>
-          )}
-          {!loadingEventos && eventos.map(ev => <PublicEventCard key={ev.id} event={ev} />)}
+          {!loadingEventos && !errorEventos && (() => {
+            const misIds = new Set(misEventos.map(e => e.id))
+            const publicosSinRepetir = eventos.filter(e => !misIds.has(e.id))
+            const hayAlgo = misEventos.length > 0 || publicosSinRepetir.length > 0
+            if (!hayAlgo) return <p className="empty">No hay eventos</p>
+            return (
+              <>
+                {user && misEventos.length > 0 && (
+                  <>
+                    <p style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text2)', margin: '0.5rem 0 0.4rem' }}>Eventos de tus clubes</p>
+                    {misEventos.map(ev => <PublicEventCard key={ev.id} event={ev} onUpdate={loadEventos} />)}
+                  </>
+                )}
+                {publicosSinRepetir.length > 0 && (
+                  <>
+                    <p style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text2)', margin: '0.8rem 0 0.4rem' }}>Eventos públicos</p>
+                    {publicosSinRepetir.map(ev => <PublicEventCard key={ev.id} event={ev} onUpdate={loadEventos} />)}
+                  </>
+                )}
+              </>
+            )
+          })()}
         </>
       )}
     </div>
@@ -205,25 +228,57 @@ function UserCard({ user }) {
   )
 }
 
-function PublicEventCard({ event: ev }) {
+function PublicEventCard({ event: ev, onUpdate }) {
+  const { user } = useAuth()
+  const [loading, setLoading] = useState(false)
+
+  async function handleToggle(e) {
+    e.preventDefault()
+    if (!user) return
+    setLoading(true)
+    try {
+      if (ev.yo_participo) {
+        await leaveEvent(ev.club_id, ev.id)
+      } else {
+        await joinEvent(ev.club_id, ev.id)
+      }
+      await onUpdate()
+    } catch {}
+    setLoading(false)
+  }
+
   return (
-    <Link to={`/club/${ev.club?.id}`} className="event-card" style={{ display: 'block', textDecoration: 'none' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
-        <div style={{ flex: 1 }}>
-          <h3 style={{ fontSize: '0.95rem', fontWeight: 600 }}>{ev.titulo}</h3>
-          <p className="event-date">{new Date(ev.fecha_salida).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</p>
-        </div>
-        {ev.club && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
-            <div className="club-escudo" style={{ width: 28, height: 28 }}>
-              {ev.club.escudo_url ? <img src={ev.club.escudo_url} alt="" /> : <span style={{ fontSize: '9px' }}>{ev.club.nombre?.slice(0,2).toUpperCase()}</span>}
-            </div>
-            <span style={{ fontSize: '0.78rem', color: 'var(--text2)' }}>{ev.club.nombre}</span>
+    <div className="event-card" style={{ textDecoration: 'none' }}>
+      <Link to={`/club/${ev.club?.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+          <div style={{ flex: 1 }}>
+            <h3 style={{ fontSize: '0.95rem', fontWeight: 600 }}>{ev.titulo}</h3>
+            <p className="event-date">{new Date(ev.fecha_salida).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</p>
           </div>
-        )}
-      </div>
-      {ev.punto_encuentro && <p style={{ fontSize: '0.82rem', marginTop: '0.3rem' }}>📍 {ev.punto_encuentro}{ev.destino ? ` → ${ev.destino}` : ''}</p>}
-      <p style={{ fontSize: '0.78rem', color: 'var(--text3)', marginTop: '0.3rem' }}>👥 {ev.participantes_count || 0} anotados</p>
-    </Link>
+          {ev.club && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+              <div className="club-escudo" style={{ width: 28, height: 28 }}>
+                {ev.club.escudo_url ? <img src={ev.club.escudo_url} alt="" /> : <span style={{ fontSize: '9px' }}>{ev.club.nombre?.slice(0,2).toUpperCase()}</span>}
+              </div>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text2)' }}>{ev.club.nombre}</span>
+            </div>
+          )}
+        </div>
+        {ev.punto_encuentro && <p style={{ fontSize: '0.82rem', marginTop: '0.3rem' }}>📍 {ev.punto_encuentro}{ev.destino ? ` → ${ev.destino}` : ''}</p>}
+        <p style={{ fontSize: '0.78rem', color: 'var(--text3)', marginTop: '0.3rem' }}>👥 {ev.participantes_count || 0} anotados</p>
+      </Link>
+      {user && (
+        <div style={{ marginTop: '0.5rem' }}>
+          <button
+            className={ev.yo_participo ? 'btn-secondary' : 'btn-primary'}
+            style={{ fontSize: '0.8rem', padding: '0.3rem 0.8rem' }}
+            onClick={handleToggle}
+            disabled={loading}
+          >
+            {ev.yo_participo ? 'No participar' : 'Anotarse'}
+          </button>
+        </div>
+      )}
+    </div>
   )
 }

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getClub, joinClub, getClubEvents, getRoutes, createEvent, addRoute, updateRoute, deleteRoute, joinEvent, leaveEvent, getEventParticipants, updateEvent, deleteEvent, updateMember, getClubPosts } from '../api/clubs'
 import { useAuth } from '../context/AuthContext'
 import { getBandera } from '../components/PaisSelector'
@@ -31,12 +31,15 @@ export default function Club() {
   const { id } = useParams()
   const { user } = useAuth()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [club, setClub] = useState(null)
   const [posts, setPosts] = useState([])
   const [events, setEvents] = useState([])
   const [routes, setRoutes] = useState([])
-  const [tab, setTab] = useState('feed')
+  const [tab, setTab] = useState(searchParams.get('tab') || 'feed')
   const [joined, setJoined] = useState(false)
+  const highlightId = searchParams.get('highlight')
+  const didScrollRef = useRef(false)
 
   // Crear evento
   const [showEventForm, setShowEventForm] = useState(false)
@@ -62,6 +65,15 @@ export default function Club() {
   const [editRouteForm, setEditRouteForm] = useState({})
 
   useEffect(() => { loadAll() }, [id])
+
+  useEffect(() => {
+    if (!highlightId || didScrollRef.current) return
+    const el = document.getElementById(`item-${highlightId}`)
+    if (el) {
+      didScrollRef.current = true
+      setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 200)
+    }
+  }, [tab, events, routes, highlightId])
 
   async function loadAll() {
     try {
@@ -235,9 +247,15 @@ export default function Club() {
 
       <div className="tabs">
         <button className={tab === 'feed' ? 'tab active' : 'tab'} onClick={() => setTab('feed')}>Feed</button>
-        <button className={tab === 'eventos' ? 'tab active' : 'tab'} onClick={() => setTab('eventos')}>Salidas</button>
-        <button className={tab === 'rutas' ? 'tab active' : 'tab'} onClick={() => setTab('rutas')}>Rutas</button>
-        <button className={tab === 'miembros' ? 'tab active' : 'tab'} onClick={() => setTab('miembros')}>Miembros</button>
+        <button className={tab === 'eventos' ? 'tab active' : 'tab'} onClick={() => setTab('eventos')}>
+          Salidas {events.filter(e => estadoEvento(e.fecha_salida).label !== 'Concluido').length > 0 && <span className="tab-badge">{events.filter(e => estadoEvento(e.fecha_salida).label !== 'Concluido').length}</span>}
+        </button>
+        <button className={tab === 'rutas' ? 'tab active' : 'tab'} onClick={() => setTab('rutas')}>
+          Rutas {routes.length > 0 && <span className="tab-badge">{routes.length}</span>}
+        </button>
+        <button className={tab === 'miembros' ? 'tab active' : 'tab'} onClick={() => setTab('miembros')}>
+          Miembros {club.members?.length > 0 && <span className="tab-badge">{club.members.length}</span>}
+        </button>
       </div>
 
       {tab === 'feed' && (
@@ -245,7 +263,7 @@ export default function Club() {
           {!myRole && club.tipo === 'privado'
             ? <p className="empty">Este club es privado. Solicitá ingreso para ver las publicaciones.</p>
             : <>
-                {canPost && <CreatePost onCreated={loadPosts} clubId={id} />}
+                {canPost && <CreatePost onCreated={loadPosts} clubId={id} events={events} routes={routes} />}
                 {posts.length === 0
                   ? <p className="empty">No hay publicaciones aún.</p>
                   : posts.map(p => <PostCard key={p.id} post={p} showRol onDelete={async (pid) => { await deletePost(pid); loadPosts() }} />)}
@@ -292,7 +310,7 @@ export default function Club() {
           )}
 
           {events.length === 0 ? <p className="empty">No hay salidas programadas</p> : events.map(ev => (
-            <div key={ev.id} className="event-card">
+            <div key={ev.id} id={`item-${ev.id}`} className={`event-card${highlightId === String(ev.id) ? ' highlight-item' : ''}`}>
               {editingEvent === ev.id ? (
                 <form onSubmit={handleSaveEditEvent} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   <input className="input" value={editEventForm.titulo} onChange={e => setEditEventForm(f => ({ ...f, titulo: e.target.value }))} required />
@@ -410,7 +428,7 @@ export default function Club() {
           )}
 
           {routes.length === 0 ? <p className="empty">No hay rutas guardadas</p> : routes.map(r => (
-            <div key={r.id} className="route-card">
+            <div key={r.id} id={`item-${r.id}`} className={`route-card${highlightId === String(r.id) ? ' highlight-item' : ''}`}>
               {editingRoute === r.id ? (
                 <form onSubmit={handleSaveEditRoute} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   <input className="input" value={editRouteForm.nombre} onChange={e => setEditRouteForm(f => ({ ...f, nombre: e.target.value }))} required />

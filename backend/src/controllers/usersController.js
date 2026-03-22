@@ -60,7 +60,7 @@ async function getProfile(req, res) {
 }
 
 async function updateProfile(req, res) {
-  const { username, bio, whatsapp, telegram, whatsapp_visibility, telegram_visibility } = req.body
+  const { username, bio, whatsapp, telegram, whatsapp_visibility, telegram_visibility, avatar_clear } = req.body
   const avatar_url = req.file?.path || undefined
 
   try {
@@ -75,6 +75,7 @@ async function updateProfile(req, res) {
     if (whatsapp_visibility) { fields.push(`whatsapp_visibility = $${i++}`); values.push(whatsapp_visibility) }
     if (telegram_visibility) { fields.push(`telegram_visibility = $${i++}`); values.push(telegram_visibility) }
     if (avatar_url) { fields.push(`avatar_url = $${i++}`); values.push(avatar_url) }
+    else if (avatar_clear === 'true') { fields.push(`avatar_url = $${i++}`); values.push(null) }
 
     if (!fields.length) return res.status(400).json({ error: 'Nada para actualizar' })
 
@@ -91,17 +92,26 @@ async function updateProfile(req, res) {
 }
 
 async function addMoto(req, res) {
-  const { apodo, marca, modelo } = req.body
+  const { apodo, marca, modelo, foto_clear } = req.body
   const foto_url = req.file?.path || null
 
   try {
     const existing = await pool.query('SELECT id FROM motos WHERE user_id = $1', [req.user.id])
     let result
     if (existing.rows.length) {
-      result = await pool.query(
-        'UPDATE motos SET apodo = $1, marca = $2, modelo = $3, foto_url = COALESCE($4, foto_url) WHERE user_id = $5 RETURNING *',
-        [apodo, marca, modelo, foto_url, req.user.id]
-      )
+      const fotoExpr = foto_url ? `$4` : (foto_clear === 'true' ? `$4` : `foto_url`)
+      const fotoVal = foto_url ? foto_url : (foto_clear === 'true' ? null : undefined)
+      if (fotoVal !== undefined) {
+        result = await pool.query(
+          `UPDATE motos SET apodo = $1, marca = $2, modelo = $3, foto_url = ${fotoExpr} WHERE user_id = $5 RETURNING *`,
+          [apodo, marca, modelo, fotoVal, req.user.id]
+        )
+      } else {
+        result = await pool.query(
+          'UPDATE motos SET apodo = $1, marca = $2, modelo = $3 WHERE user_id = $4 RETURNING *',
+          [apodo, marca, modelo, req.user.id]
+        )
+      }
     } else {
       result = await pool.query(
         'INSERT INTO motos (user_id, apodo, marca, modelo, foto_url) VALUES ($1, $2, $3, $4, $5) RETURNING *',
@@ -109,6 +119,7 @@ async function addMoto(req, res) {
       )
     }
     res.json(result.rows[0])
+
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Error interno' })

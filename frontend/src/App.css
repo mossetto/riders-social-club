@@ -40,8 +40,10 @@ button { cursor: pointer; font-family: inherit; }
 
 /* Tabs */
 .tabs { display: flex; border-bottom: 0.5px solid var(--border); margin-bottom: 1rem; }
-.tab { flex: 1; text-align: center; padding: 0.6rem; font-size: 0.85rem; color: var(--text2); background: none; border: none; border-bottom: 2px solid transparent; }
+.tab { flex: 1; text-align: center; padding: 0.6rem; font-size: 0.85rem; color: var(--text2); background: none; border: none; border-bottom: 2px solid transparent; display: flex; align-items: center; justify-content: center; gap: 0.3rem; }
 .tab.active { color: var(--purple); border-bottom-color: var(--purple); font-weight: 500; }
+.tab-badge { background: var(--purple); color: #fff; border-radius: 999px; font-size: 0.7rem; font-weight: 700; padding: 0.05rem 0.4rem; line-height: 1.4; }
+.highlight-item { outline: 2px solid var(--purple); outline-offset: 2px; border-radius: 10px; }
 
 /* Buttons */
 .btn-primary { background: var(--purple); color: #fff; border: none; border-radius: 8px; padding: 0.65rem 1.25rem; font-size: 0.9rem; font-weight: 600; }
@@ -90,12 +92,36 @@ button { cursor: pointer; font-family: inherit; }
 .comment-form input { flex: 1; padding: 0.4rem 0.7rem; }
 .comment-form button { background: var(--purple); color: #fff; border: none; border-radius: 6px; padding: 0.4rem 0.75rem; }
 
+/* Intro Screen */
+.intro-screen { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background: #000; opacity: 1; transition: opacity 0.4s ease; }
+.intro-screen.intro-fading { opacity: 0; pointer-events: none; }
+.intro-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.intro-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.45); }
+.intro-logo { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 0.75rem; }
+.intro-logo img { width: 52px; height: auto; filter: drop-shadow(0 0 18px rgba(134,59,255,0.8)) drop-shadow(0 2px 8px rgba(0,0,0,0.6)); }
+.intro-brand { font-size: 0.85rem; font-weight: 600; color: rgba(255,255,255,0.85); letter-spacing: 0.08em; text-shadow: 0 1px 6px rgba(0,0,0,0.6); }
+
 /* Create Post */
 .create-post { background: var(--bg2); border: 0.5px solid var(--border); border-radius: 10px; padding: 0.9rem; margin-bottom: 0.75rem; }
 .create-post-top { display: flex; gap: 0.65rem; margin-bottom: 0.65rem; }
 .create-post-top textarea { resize: none; flex: 1; }
-.create-post-bottom { display: flex; align-items: center; gap: 0.75rem; padding-left: calc(30px + 0.65rem); }
-.file-name { font-size: 0.75rem; color: var(--text3); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.create-post-bottom { display: flex; align-items: center; gap: 0.5rem; padding-left: calc(30px + 0.65rem); flex-wrap: wrap; }
+.file-name { font-size: 0.75rem; color: var(--text3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Mention dropdowns */
+.mention-dropdown { position: relative; }
+.mention-btn { font-size: 0.78rem; color: var(--text2); background: var(--bg3); border: 0.5px solid var(--border); border-radius: 6px; padding: 0.25rem 0.55rem; white-space: nowrap; }
+.mention-btn:hover { border-color: var(--purple); color: var(--purple); }
+.mention-list { position: absolute; bottom: calc(100% + 4px); left: 0; background: var(--bg2); border: 0.5px solid var(--border); border-radius: 8px; min-width: 180px; max-height: 180px; overflow-y: auto; z-index: 50; box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
+.mention-list-item { display: block; width: 100%; text-align: left; background: none; border: none; padding: 0.55rem 0.75rem; font-size: 0.82rem; color: var(--text); border-bottom: 0.5px solid var(--border); }
+.mention-list-item:last-child { border-bottom: none; }
+.mention-list-item:hover { background: var(--bg3); }
+.mention-chip { display: inline-flex; align-items: center; gap: 0.3rem; background: var(--purple-light); color: var(--purple-dark); border-radius: 999px; padding: 0.2rem 0.5rem 0.2rem 0.65rem; font-size: 0.78rem; font-weight: 500; white-space: nowrap; }
+.mention-chip-clear { background: none; border: none; color: var(--purple-dark); font-size: 0.9rem; line-height: 1; padding: 0; cursor: pointer; }
+
+/* Mention tags in PostCard */
+.mention-tag { display: inline-flex; align-items: center; gap: 0.25rem; background: var(--bg3); border: 0.5px solid var(--border); border-radius: 999px; padding: 0.15rem 0.55rem; font-size: 0.75rem; color: var(--text2); white-space: nowrap; max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
+.mention-tag:hover { border-color: var(--purple); color: var(--purple); }
 
 /* BurbujaRider */
 .burbuja-rider { border-radius: 50%; background: var(--purple); display: flex; align-items: center; justify-content: center; color: var(--purple-light); font-size: 11px; font-weight: 600; position: relative; overflow: visible; flex-shrink: 0; }

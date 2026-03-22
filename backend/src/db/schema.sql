@@ -152,6 +152,12 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='routes' AND column_name='post_id') THEN
     ALTER TABLE routes ADD COLUMN post_id INTEGER REFERENCES posts(id) ON DELETE SET NULL;
   END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='posts' AND column_name='mention_event_id') THEN
+    ALTER TABLE posts ADD COLUMN mention_event_id INTEGER REFERENCES events(id) ON DELETE SET NULL;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='posts' AND column_name='mention_route_id') THEN
+    ALTER TABLE posts ADD COLUMN mention_route_id INTEGER REFERENCES routes(id) ON DELETE SET NULL;
+  END IF;
 END $$;
 
 CREATE TABLE IF NOT EXISTS password_reset_tokens (

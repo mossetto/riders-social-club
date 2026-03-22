@@ -4,6 +4,39 @@ import { getProfile, updateProfile, addMoto } from '../api/users'
 import { leaveClub } from '../api/clubs'
 import { useAuth } from '../context/AuthContext'
 
+function ImageField({ label, fieldName, currentUrl }) {
+  const [mode, setMode] = useState('idle') // 'idle' | 'replace'
+  const [clear, setClear] = useState(false)
+  const hasImage = currentUrl && !clear
+
+  if (hasImage && mode !== 'replace') {
+    return (
+      <div className="image-field">
+        <span className="image-field-label">{label}</span>
+        <div className="image-field-preview">
+          <img src={currentUrl} alt="" />
+        </div>
+        <div className="image-field-actions">
+          <button type="button" className="btn-secondary" style={{ fontSize: '0.8rem' }} onClick={() => setMode('replace')}>Reemplazar imagen</button>
+          <button type="button" className="btn-link" style={{ fontSize: '0.8rem', color: 'var(--danger)' }} onClick={() => setClear(true)}>Eliminar imagen</button>
+        </div>
+        {clear && <input type="hidden" name={`${fieldName}_clear`} value="true" />}
+      </div>
+    )
+  }
+
+  return (
+    <div className="image-field">
+      <span className="image-field-label">{label}</span>
+      {clear && <input type="hidden" name={`${fieldName}_clear`} value="true" />}
+      <input type="file" name={fieldName} accept="image/*" />
+      {(hasImage || clear) && (
+        <button type="button" className="btn-link" style={{ fontSize: '0.8rem' }} onClick={() => { setMode('idle'); setClear(false) }}>Cancelar</button>
+      )}
+    </div>
+  )
+}
+
 const VIS_OPTIONS = [
   { value: 'publico', label: 'Público' },
   { value: 'miembros', label: 'Solo miembros de mis clubes' },
@@ -132,7 +165,7 @@ export default function Perfil() {
             ))}
           </div>
 
-          <label className="file-label">Foto de perfil (Opcional) <input type="file" name="avatar" accept="image/*" /></label>
+          <ImageField label="Foto de perfil (Opcional)" fieldName="avatar" currentUrl={profile.avatar_url} />
           <button type="submit" className="btn-primary">Guardar</button>
         </form>
       )}
@@ -143,7 +176,7 @@ export default function Perfil() {
           <input name="apodo" defaultValue={profile.motos?.[0]?.apodo} placeholder="Apodo de la moto" />
           <input name="marca" defaultValue={profile.motos?.[0]?.marca} placeholder="Marca (ej: Honda)" />
           <input name="modelo" defaultValue={profile.motos?.[0]?.modelo} placeholder="Modelo (ej: CB 500F)" />
-          <label className="file-label">Foto de moto <input type="file" name="foto" accept="image/*" /></label>
+          <ImageField label="Foto de moto (Opcional)" fieldName="foto" currentUrl={profile.motos?.[0]?.foto_url} />
           <button type="submit" className="btn-primary">Guardar</button>
         </form>
       )}
