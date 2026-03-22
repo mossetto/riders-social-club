@@ -82,15 +82,13 @@ export function LikesComments({ postId, likes: initLikes, comentarios: initComen
     } catch {}
   }
 
-  if (!postId) return null
-
   return (
     <>
-      <div className="post-actions" style={{ marginTop: '0.75rem' }}>
+      <div className="post-actions" style={{ marginTop: '0.75rem', borderTop: '0.5px solid var(--border)', paddingTop: '0.6rem' }}>
         <button className={`action-btn ${liked ? 'liked' : ''}`} onClick={handleLike}>♥ {likes}</button>
-        <button className="action-btn" onClick={() => setShowComments(!showComments)}>💬 {initComentarios || 0}</button>
+        <button className="action-btn" onClick={() => postId && setShowComments(!showComments)}>💬 {initComentarios || 0}</button>
       </div>
-      {showComments && <CommentsSection postId={postId} />}
+      {showComments && postId && <CommentsSection postId={postId} />}
     </>
   )
 }
