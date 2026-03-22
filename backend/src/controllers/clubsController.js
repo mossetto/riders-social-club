@@ -200,4 +200,20 @@ async function getMyClubes(req, res) {
   }
 }
 
-module.exports = { getClubs, getClub, createClub, updateClub, joinClub, updateMember, getMyClubes, canDo }
+async function leaveClub(req, res) {
+  const { id } = req.params
+  try {
+    const member = await pool.query(
+      `SELECT rol FROM club_members WHERE club_id = $1 AND user_id = $2 AND estado = 'activo'`,
+      [id, req.user.id])
+    if (!member.rows.length) return res.status(404).json({ error: 'No sos miembro' })
+    if (member.rows[0].rol === 'fundador') return res.status(403).json({ error: 'El fundador no puede salir del club' })
+    await pool.query('DELETE FROM club_members WHERE club_id = $1 AND user_id = $2', [id, req.user.id])
+    res.json({ message: 'Saliste del club' })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Error interno' })
+  }
+}
+
+module.exports = { getClubs, getClub, createClub, updateClub, joinClub, leaveClub, updateMember, getMyClubes, canDo }

@@ -58,7 +58,7 @@ export default function Club() {
       setClub(clubRes.data)
       setEvents(eventsRes.data)
       setRoutes(routesRes.data)
-      const myMembership = clubRes.data.members?.find(m => m.id === user?.id)
+      const myMembership = clubRes.data.members?.find(m => Number(m.id) === Number(user?.id))
       setJoined(!!myMembership)
     } catch {}
   }
@@ -175,7 +175,7 @@ export default function Club() {
 
   if (!club) return <div className="loading">Cargando...</div>
 
-  const myRole = club.members?.find(m => m.id === user?.id)?.rol
+  const myRole = club.members?.find(m => Number(m.id) === Number(user?.id))?.rol
   const canPost = !!myRole
   const canCreateEvent = canDo(club.config_salidas || 'cualquiera', myRole)
   const canAddRoute = canDo(club.config_rutas || 'cualquiera', myRole)

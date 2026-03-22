@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { getProfile, updateProfile, addMoto } from '../api/users'
+import { leaveClub } from '../api/clubs'
 import { useAuth } from '../context/AuthContext'
 
 const VIS_OPTIONS = [
@@ -14,10 +15,10 @@ export default function Perfil() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
-  const [editing, setEditing] = useState(false)
-  const [editingMoto, setEditingMoto] = useState(false)
+  const [activeForm, setActiveForm] = useState(null) // 'perfil' | 'moto' | null
   const [wspVis, setWspVis] = useState('publico')
   const [tgVis, setTgVis] = useState('publico')
+  const [confirmLeave, setConfirmLeave] = useState(null) // club id
   const isMe = user?.id === Number(id)
 
   useEffect(() => { load() }, [id])
@@ -31,13 +32,17 @@ export default function Perfil() {
     } catch {}
   }
 
+  function toggleForm(form) {
+    setActiveForm(prev => prev === form ? null : form)
+  }
+
   async function handleSaveProfile(e) {
     e.preventDefault()
     const fd = new FormData(e.target)
     fd.set('whatsapp_visibility', wspVis)
     fd.set('telegram_visibility', tgVis)
     await updateProfile(fd)
-    setEditing(false)
+    setActiveForm(null)
     load()
   }
 
@@ -45,8 +50,18 @@ export default function Perfil() {
     e.preventDefault()
     const fd = new FormData(e.target)
     await addMoto(fd)
-    setEditingMoto(false)
+    setActiveForm(null)
     load()
+  }
+
+  async function handleLeaveClub(clubId) {
+    try {
+      await leaveClub(clubId)
+      setConfirmLeave(null)
+      load()
+    } catch (err) {
+      alert(err?.response?.data?.error || 'Error al salir del club')
+    }
   }
 
   if (!profile) return <div className="loading">Cargando...</div>
@@ -81,8 +96,8 @@ export default function Perfil() {
 
         {isMe && (
           <div className="perfil-actions">
-            <button className="btn-secondary" onClick={() => setEditing(!editing)}>Editar perfil</button>
-            <button className="btn-secondary" onClick={() => setEditingMoto(!editingMoto)}>
+            <button className={`btn-secondary${activeForm === 'perfil' ? ' active' : ''}`} onClick={() => toggleForm('perfil')}>Editar perfil</button>
+            <button className={`btn-secondary${activeForm === 'moto' ? ' active' : ''}`} onClick={() => toggleForm('moto')}>
               {profile.motos?.[0] ? 'Editar moto' : 'Agregar moto'}
             </button>
             <button className="btn-secondary" onClick={() => navigate('/crear-club')}>Crear club</button>
@@ -91,7 +106,7 @@ export default function Perfil() {
         )}
       </div>
 
-      {editing && isMe && (
+      {activeForm === 'perfil' && isMe && (
         <form className="edit-form" onSubmit={handleSaveProfile} encType="multipart/form-data">
           <h3>Editar perfil</h3>
           <input name="username" defaultValue={profile.username} placeholder="Nombre visible" />
@@ -122,7 +137,7 @@ export default function Perfil() {
         </form>
       )}
 
-      {editingMoto && isMe && (
+      {activeForm === 'moto' && isMe && (
         <form className="edit-form" onSubmit={handleSaveMoto} encType="multipart/form-data">
           <h3>{profile.motos?.[0] ? 'Editar moto' : 'Agregar moto'}</h3>
           <input name="apodo" defaultValue={profile.motos?.[0]?.apodo} placeholder="Apodo de la moto" />
@@ -137,9 +152,20 @@ export default function Perfil() {
         <div className="perfil-clubes">
           <h3>Clubes</h3>
           {profile.clubes.map(c => (
-            <Link key={c.id} to={`/club/${c.id}`} className="club-chip">
-              {c.nombre} · {c.rol}
-            </Link>
+            <div key={c.id} className="perfil-club-row">
+              <Link to={`/club/${c.id}`} className="club-chip">{c.nombre} · {c.rol}</Link>
+              {isMe && c.rol !== 'fundador' && (
+                confirmLeave === c.id ? (
+                  <span className="leave-confirm">
+                    ¿Confirmar?
+                    <button className="btn-danger" style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }} onClick={() => handleLeaveClub(c.id)}>Sí, salir</button>
+                    <button className="btn-secondary" style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }} onClick={() => setConfirmLeave(null)}>Cancelar</button>
+                  </span>
+                ) : (
+                  <button className="btn-link" style={{ fontSize: '0.75rem', color: 'var(--danger)' }} onClick={() => setConfirmLeave(c.id)}>Salir del club</button>
+                )
+              )}
+            </div>
           ))}
         </div>
       )}
