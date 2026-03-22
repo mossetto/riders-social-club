@@ -3,7 +3,7 @@ const pool = require('../db/pool')
 const { signAccess, signRefresh, verifyRefresh } = require('../utils/jwt')
 
 async function register(req, res) {
-  const { email, password, username } = req.body
+  const { email, password, username, pais } = req.body
 
   if (!email || !password || !username) {
     return res.status(400).json({ error: 'Email, username y password son requeridos' })
@@ -23,10 +23,10 @@ async function register(req, res) {
 
     const password_hash = await bcrypt.hash(password, 12)
     const result = await pool.query(
-      `INSERT INTO users (email, password_hash, username)
-       VALUES ($1, $2, $3)
-       RETURNING id, email, username, created_at`,
-      [email.toLowerCase(), password_hash, username]
+      `INSERT INTO users (email, password_hash, username, pais)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, email, username, pais, created_at`,
+      [email.toLowerCase(), password_hash, username, pais || null]
     )
     const user = result.rows[0]
 

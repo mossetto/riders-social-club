@@ -1,11 +1,24 @@
 import { Link } from 'react-router-dom'
 import { joinClub } from '../api/clubs'
 import { useAuth } from '../context/AuthContext'
+import { getBandera } from './PaisSelector'
+
+function tiempoRelativo(fecha) {
+  if (!fecha) return null
+  const diff = Date.now() - new Date(fecha).getTime()
+  const min = Math.floor(diff / 60000)
+  if (min < 1) return 'hace un momento'
+  if (min < 60) return `hace ${min} min`
+  const h = Math.floor(min / 60)
+  if (h < 24) return `hace ${h}h`
+  const d = Math.floor(h / 24)
+  if (d < 7) return `hace ${d}d`
+  return new Date(fecha).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })
+}
 
 export default function ClubCard({ club, isMember, onJoin }) {
   const { user } = useAuth()
-  const actividad = Number(club.posts_semana || 0) + Number(club.eventos_semana || 0)
-  const actMax = 20
+  const bandera = getBandera(club.pais)
 
   async function handleJoin() {
     if (!user) return
@@ -28,11 +41,12 @@ export default function ClubCard({ club, isMember, onJoin }) {
         <div className="club-stats">
           <span>{club.miembros} miembros</span>
           {club.provincia && <span>· {club.provincia}</span>}
+          {bandera && <span>· {bandera} {club.pais}</span>}
           {club.tipo === 'privado' && <span>· Privado</span>}
         </div>
-        <div className="activity-bar">
-          <div className="activity-fill" style={{ width: `${Math.min(actividad / actMax * 100, 100)}%` }} />
-        </div>
+        {club.ultima_actividad && (
+          <p className="club-ultima-act">Última actividad {tiempoRelativo(club.ultima_actividad)}</p>
+        )}
         {user && !isMember && (
           <button className="btn-join" onClick={handleJoin}>
             {club.tipo === 'privado' ? 'Solicitar ingreso' : 'Unirse'}

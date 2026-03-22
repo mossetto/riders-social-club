@@ -116,6 +116,15 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='motos' AND column_name='marca') THEN
     ALTER TABLE motos ADD COLUMN marca VARCHAR(100);
   END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='clubs' AND column_name='pais') THEN
+    ALTER TABLE clubs ADD COLUMN pais VARCHAR(100);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='clubs' AND column_name='portada_url') THEN
+    ALTER TABLE clubs ADD COLUMN portada_url VARCHAR(500);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='pais') THEN
+    ALTER TABLE users ADD COLUMN pais VARCHAR(100);
+  END IF;
 END $$;
 
 -- Índices para performance

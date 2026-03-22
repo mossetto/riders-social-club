@@ -112,8 +112,7 @@ button { cursor: pointer; font-family: inherit; }
 .club-nombre { font-size: 0.95rem; font-weight: 600; }
 .club-slogan { font-size: 0.8rem; color: var(--text2); margin-top: 2px; }
 .club-stats { font-size: 0.78rem; color: var(--text3); margin-top: 4px; }
-.activity-bar { height: 3px; background: var(--border); border-radius: 2px; margin-top: 6px; overflow: hidden; }
-.activity-fill { height: 100%; background: var(--purple); border-radius: 2px; transition: width 0.3s; }
+.club-ultima-act { font-size: 0.75rem; color: var(--text3); margin-top: 4px; }
 
 /* Filter Row */
 .filter-row { display: flex; gap: 0.4rem; overflow-x: auto; padding-bottom: 0.5rem; margin-bottom: 0.75rem; scrollbar-width: none; }
@@ -126,7 +125,7 @@ button { cursor: pointer; font-family: inherit; }
 .perfil-avatar-wrap { display: flex; justify-content: center; margin-bottom: 1rem; }
 .perfil-avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--purple); display: flex; align-items: center; justify-content: center; color: var(--purple-light); font-size: 24px; font-weight: 700; position: relative; overflow: visible; }
 .perfil-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-.perfil-moto-badge { position: absolute; bottom: -4px; right: -6px; width: 28px; height: 28px; border-radius: 50%; background: var(--gray-dark); border: 3px solid var(--bg2); display: flex; align-items: center; justify-content: center; font-size: 13px; overflow: hidden; }
+.perfil-moto-badge { position: absolute; bottom: -6px; right: -8px; width: 42px; height: 42px; border-radius: 50%; background: var(--gray-dark); border: 3px solid var(--bg2); display: flex; align-items: center; justify-content: center; font-size: 18px; overflow: hidden; }
 .perfil-moto-badge img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .perfil-info { text-align: center; }
 .perfil-info h2 { font-size: 1.2rem; font-weight: 700; }
@@ -190,7 +189,22 @@ button { cursor: pointer; font-family: inherit; }
 .mi-club-stats { font-size: 0.7rem; color: var(--text3); margin-top: 2px; }
 .feed-section-title { font-size: 0.85rem; color: var(--text2); font-weight: 500; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 0.5px solid var(--border); }
 
+/* País Selector */
+.pais-selector { position: relative; }
+.pais-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--bg3); border: 0.5px solid var(--border); border-radius: 8px; z-index: 100; max-height: 220px; overflow-y: auto; list-style: none; margin-top: 2px; }
+.pais-option { display: flex; align-items: center; gap: 0.5rem; padding: 0.55rem 0.9rem; cursor: pointer; font-size: 0.9rem; }
+.pais-option:hover { background: var(--bg2); }
+.pais-flag { font-size: 1.1rem; }
+
+/* Map link */
+.map-link { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.85rem; color: var(--purple-mid); text-decoration: underline; margin-top: 0.4rem; }
+
+/* Club portada */
+.club-portada { margin: -1rem -1.5rem 1rem; height: 160px; overflow: hidden; }
+.club-portada img { width: 100%; height: 100%; object-fit: cover; }
+
 @media (max-width: 480px) {
   .page { padding: 0.75rem; }
   .navbar { padding: 0 0.75rem; }
+  .club-portada { margin: -0.75rem -0.75rem 0.75rem; }
 }

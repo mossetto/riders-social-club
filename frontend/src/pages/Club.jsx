@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { getClub, joinClub, getClubEvents, getRoutes, createEvent, addRoute } from '../api/clubs'
 import { useAuth } from '../context/AuthContext'
+import { getBandera } from '../components/PaisSelector'
 import PostCard from '../components/PostCard'
 import CreatePost from '../components/CreatePost'
 import { getFeed, deletePost } from '../api/posts'
@@ -97,6 +98,11 @@ export default function Club() {
 
   return (
     <div className="page">
+      {club.portada_url && (
+        <div className="club-portada">
+          <img src={club.portada_url} alt="portada" />
+        </div>
+      )}
       <div className="club-header">
         <div className="club-escudo-lg">
           {club.escudo_url ? <img src={club.escudo_url} alt={club.nombre} /> : <span>{club.nombre.slice(0,2).toUpperCase()}</span>}
@@ -104,7 +110,12 @@ export default function Club() {
         <div>
           <h1>{club.nombre}</h1>
           {club.slogan && <p className="club-slogan">{club.slogan}</p>}
-          <p className="club-meta">{club.miembros} miembros · {club.provincia} · {club.tipo}</p>
+          <p className="club-meta">
+            {club.miembros} miembros
+            {club.provincia && ` · ${club.provincia}`}
+            {club.pais && ` · ${getBandera(club.pais)} ${club.pais}`}
+            {` · ${club.tipo}`}
+          </p>
           {myRole && <span className="role-badge">{myRole}</span>}
           {!joined && user && <button className="btn-primary" onClick={handleJoin}>Solicitar ingreso</button>}
         </div>
@@ -208,12 +219,10 @@ export default function Club() {
               {e.punto_encuentro && <p>📍 {e.punto_encuentro}{e.destino ? ` → ${e.destino}` : ''}</p>}
               {e.descripcion && <p>{e.descripcion}</p>}
               {e.ruta && (
-                <p className="event-ruta-tag">🗺️ Ruta: {e.ruta.nombre}</p>
+                <a href={e.ruta.maps_url} target="_blank" rel="noopener noreferrer" className="map-link">🗺️ Ver ruta: {e.ruta.nombre}</a>
               )}
-              {e.ruta_url && (
-                <div className="map-embed">
-                  <iframe src={`https://maps.google.com/maps?q=${encodeURIComponent(e.ruta_url)}&output=embed`} title="ruta" />
-                </div>
+              {!e.ruta && e.ruta_url && (
+                <a href={e.ruta_url} target="_blank" rel="noopener noreferrer" className="map-link">🗺️ Ver ruta en Google Maps</a>
               )}
             </div>
           ))}
@@ -271,7 +280,10 @@ export default function Club() {
               <div className="route-header">
                 <div>
                   <h3>{r.nombre}</h3>
-                  {r.descripcion && <p>{r.descripcion}</p>}
+                  {r.descripcion && <p style={{ fontSize: '0.85rem', color: 'var(--text2)', marginTop: '0.2rem' }}>{r.descripcion}</p>}
+                  {r.maps_url && (
+                    <a href={r.maps_url} target="_blank" rel="noopener noreferrer" className="map-link" style={{ marginTop: '0.5rem', display: 'inline-block' }}>🗺️ Ver en Google Maps</a>
+                  )}
                 </div>
                 {r.agregada_por && (
                   <div className="route-autor">
@@ -283,9 +295,6 @@ export default function Club() {
                     <span className="route-autor-name">{r.agregada_por.username}</span>
                   </div>
                 )}
-              </div>
-              <div className="map-embed">
-                <iframe src={`${r.maps_url.includes('output=embed') ? r.maps_url : r.maps_url + (r.maps_url.includes('?') ? '&' : '?') + 'output=embed'}`} title={r.nombre} />
               </div>
             </div>
           ))}

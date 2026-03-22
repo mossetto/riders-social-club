@@ -16,8 +16,8 @@ export function AuthProvider({ children }) {
     setLoading(false)
   }, [])
 
-  async function register(email, password, username) {
-    const { data } = await api.post('/auth/register', { email, password, username })
+  async function register(email, password, username, pais) {
+    const { data } = await api.post('/auth/register', { email, password, username, pais })
     localStorage.setItem('accessToken', data.accessToken)
     localStorage.setItem('refreshToken', data.refreshToken)
     localStorage.setItem('user', JSON.stringify(data.user))

@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import PaisSelector from '../components/PaisSelector'
 
 export default function Register() {
   const { register } = useAuth()
   const navigate = useNavigate()
-  const [form, setForm] = useState({ email: '', username: '', password: '', password2: '' })
+  const [form, setForm] = useState({ email: '', username: '', password: '', password2: '', pais: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -17,7 +18,7 @@ export default function Register() {
     }
     setLoading(true)
     try {
-      const newUser = await register(form.email, form.password, form.username)
+      const newUser = await register(form.email, form.password, form.username, form.pais)
       navigate(`/perfil/${newUser.id}`)
     } catch (err) {
       setError(err.response?.data?.error || 'Error al registrarse')
@@ -62,6 +63,10 @@ export default function Register() {
             value={form.password2}
             onChange={e => setForm({ ...form, password2: e.target.value })}
             required
+          />
+          <PaisSelector
+            value={form.pais}
+            onChange={pais => setForm({ ...form, pais })}
           />
           {error && <p className="error">{error}</p>}
           <button type="submit" disabled={loading}>

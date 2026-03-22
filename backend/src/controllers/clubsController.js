@@ -1,21 +1,27 @@
 const pool = require('../db/pool')
 
 async function getClubs(req, res) {
-  const { provincia } = req.query
+  const { provincia, pais } = req.query
   try {
     let query = `
       SELECT c.*,
         COUNT(DISTINCT cm.id) FILTER (WHERE cm.estado = 'activo') as miembros,
-        COUNT(DISTINCT p.id) FILTER (WHERE p.created_at > NOW() - INTERVAL '7 days') as posts_semana,
-        COUNT(DISTINCT e.id) FILTER (WHERE e.created_at > NOW() - INTERVAL '7 days') as eventos_semana
+        GREATEST(
+          MAX(p.created_at),
+          MAX(e.created_at),
+          MAX(cm2.joined_at)
+        ) as ultima_actividad
       FROM clubs c
       LEFT JOIN club_members cm ON cm.club_id = c.id
       LEFT JOIN posts p ON p.club_id = c.id
       LEFT JOIN events e ON e.club_id = c.id
+      LEFT JOIN club_members cm2 ON cm2.club_id = c.id AND cm2.estado = 'activo'
       WHERE 1=1`
     const values = []
-    if (provincia) { query += ` AND c.provincia = $1`; values.push(provincia) }
-    query += ` GROUP BY c.id ORDER BY (COUNT(DISTINCT p.id) FILTER (WHERE p.created_at > NOW() - INTERVAL '7 days') + COUNT(DISTINCT e.id) FILTER (WHERE e.created_at > NOW() - INTERVAL '7 days')) DESC, COUNT(DISTINCT cm.id) FILTER (WHERE cm.estado = 'activo') DESC`
+    let idx = 1
+    if (provincia) { query += ` AND c.provincia = $${idx++}`; values.push(provincia) }
+    if (pais) { query += ` AND c.pais = $${idx++}`; values.push(pais) }
+    query += ` GROUP BY c.id ORDER BY ultima_actividad DESC NULLS LAST, COUNT(DISTINCT cm.id) FILTER (WHERE cm.estado = 'activo') DESC`
     const result = await pool.query(query, values)
     res.json(result.rows)
   } catch (err) {
@@ -48,13 +54,14 @@ async function getClub(req, res) {
 }
 
 async function createClub(req, res) {
-  const { nombre, slogan, provincia, tipo } = req.body
-  const escudo_url = req.file?.path || null
+  const { nombre, slogan, provincia, pais, tipo } = req.body
+  const escudo_url = req.files?.escudo?.[0]?.path || null
+  const portada_url = req.files?.portada?.[0]?.path || null
   if (!nombre) return res.status(400).json({ error: 'El nombre es requerido' })
   try {
     const club = await pool.query(
-      `INSERT INTO clubs (nombre, slogan, provincia, tipo, escudo_url) VALUES ($1,$2,$3,$4,$5) RETURNING *`,
-      [nombre, slogan, provincia, tipo || 'publico', escudo_url]
+      `INSERT INTO clubs (nombre, slogan, provincia, pais, tipo, escudo_url, portada_url) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+      [nombre, slogan, provincia, pais, tipo || 'publico', escudo_url, portada_url]
     )
     await pool.query(
       `INSERT INTO club_members (club_id, user_id, rol, estado) VALUES ($1,$2,'fundador','activo')`,

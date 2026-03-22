@@ -42,6 +42,12 @@ async function createEvent(req, res) {
       `INSERT INTO events (club_id, user_id, titulo, descripcion, fecha_salida, punto_encuentro, destino, paradas, ruta_url, ruta_id)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
       [clubId, req.user.id, titulo, descripcion, fecha_salida, punto_encuentro, destino, paradas, finalRutaUrl, ruta_id || null])
+    // Post automático en el feed del club
+    const fechaFmt = new Date(fecha_salida).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
+    await pool.query(
+      `INSERT INTO posts (user_id, club_id, tipo, contenido) VALUES ($1, $2, 'club', $3)`,
+      [req.user.id, clubId, `📅 Nueva salida: **${titulo}** — ${fechaFmt}${punto_encuentro ? ` · Salida desde ${punto_encuentro}` : ''}${destino ? ` → ${destino}` : ''}`]
+    )
     res.status(201).json(result.rows[0])
   } catch (err) {
     console.error(err)
@@ -79,6 +85,11 @@ async function addRoute(req, res) {
     const result = await pool.query(
       'INSERT INTO routes (club_id, user_id, nombre, descripcion, maps_url) VALUES ($1,$2,$3,$4,$5) RETURNING *',
       [clubId, req.user.id, nombre, descripcion, maps_url])
+    // Post automático en el feed del club
+    await pool.query(
+      `INSERT INTO posts (user_id, club_id, tipo, contenido) VALUES ($1, $2, 'club', $3)`,
+      [req.user.id, clubId, `🗺️ Nueva ruta guardada: **${nombre}**${descripcion ? ` — ${descripcion}` : ''}`]
+    )
     res.status(201).json(result.rows[0])
   } catch (err) {
     console.error(err)
