@@ -1,6 +1,7 @@
 const router = require('express').Router()
 const rateLimit = require('express-rate-limit')
 const { register, login, refresh, logout, deleteAccount } = require('../controllers/authController')
+const { forgotPassword, resetPassword } = require('../controllers/passwordController')
 const { requireAuth } = require('../middleware/auth')
 
 // Rate limit para registro: máximo 3 intentos por IP por hora
@@ -26,5 +27,7 @@ router.post('/login', loginLimiter, login)
 router.post('/refresh', refresh)
 router.post('/logout', logout)
 router.delete('/me', requireAuth, deleteAccount)
+router.post('/forgot-password', forgotPassword)
+router.post('/reset-password', resetPassword)
 
 module.exports = router

@@ -1,13 +1,15 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const mensaje = location.state?.mensaje
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -46,11 +48,15 @@ export default function Login() {
             onChange={e => setForm({ ...form, password: e.target.value })}
             required
           />
+          {mensaje && <p style={{ color: '#a0f0a0', fontSize: '0.9rem' }}>{mensaje}</p>}
           {error && <p className="error">{error}</p>}
           <button type="submit" disabled={loading}>
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
+        <p className="auth-switch">
+          <Link to="/forgot-password" style={{ color: '#aaa', fontSize: '0.85rem' }}>¿Olvidaste tu contraseña?</Link>
+        </p>
         <p className="auth-switch">
           ¿No tenés cuenta? <Link to="/register">Registrate</Link>
         </p>

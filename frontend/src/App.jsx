@@ -9,6 +9,8 @@ import Explorar from './pages/Explorar'
 import Perfil from './pages/Perfil'
 import Club from './pages/Club'
 import CrearClub from './pages/CrearClub'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import './App.css'
 
 function PrivateRoute({ children }) {
@@ -39,6 +41,8 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+          <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
+          <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
           <Route path="/" element={<Layout><Home /></Layout>} />
           <Route path="/mis-clubes" element={<PrivateRoute><Layout><MisClubes /></Layout></PrivateRoute>} />
           <Route path="/explorar" element={<Layout><Explorar /></Layout>} />
