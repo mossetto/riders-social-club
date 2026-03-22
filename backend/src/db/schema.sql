@@ -176,19 +176,38 @@ DECLARE
   ev RECORD;
   rt RECORD;
   new_post_id INTEGER;
+  effective_user INTEGER;
 BEGIN
-  FOR ev IN SELECT * FROM events WHERE post_id IS NULL AND user_id IS NOT NULL LOOP
-    INSERT INTO posts (user_id, club_id, tipo, contenido)
-    VALUES (ev.user_id, ev.club_id, 'club', '📅 ' || ev.titulo)
-    RETURNING id INTO new_post_id;
-    UPDATE events SET post_id = new_post_id WHERE id = ev.id;
+  FOR ev IN
+    SELECT e.id, e.club_id, e.titulo,
+      COALESCE(e.user_id,
+        (SELECT cm.user_id FROM club_members cm WHERE cm.club_id = e.club_id AND cm.rol = 'fundador' AND cm.estado = 'activo' LIMIT 1),
+        (SELECT cm.user_id FROM club_members cm WHERE cm.club_id = e.club_id AND cm.estado = 'activo' LIMIT 1)
+      ) as uid
+    FROM events e WHERE e.post_id IS NULL
+  LOOP
+    IF ev.uid IS NOT NULL THEN
+      INSERT INTO posts (user_id, club_id, tipo, contenido)
+      VALUES (ev.uid, ev.club_id, 'club', '📅 ' || ev.titulo)
+      RETURNING id INTO new_post_id;
+      UPDATE events SET post_id = new_post_id WHERE id = ev.id;
+    END IF;
   END LOOP;
 
-  FOR rt IN SELECT * FROM routes WHERE post_id IS NULL AND user_id IS NOT NULL LOOP
-    INSERT INTO posts (user_id, club_id, tipo, contenido)
-    VALUES (rt.user_id, rt.club_id, 'club', '🗺️ ' || rt.nombre)
-    RETURNING id INTO new_post_id;
-    UPDATE routes SET post_id = new_post_id WHERE id = rt.id;
+  FOR rt IN
+    SELECT r.id, r.club_id, r.nombre,
+      COALESCE(r.user_id,
+        (SELECT cm.user_id FROM club_members cm WHERE cm.club_id = r.club_id AND cm.rol = 'fundador' AND cm.estado = 'activo' LIMIT 1),
+        (SELECT cm.user_id FROM club_members cm WHERE cm.club_id = r.club_id AND cm.estado = 'activo' LIMIT 1)
+      ) as uid
+    FROM routes r WHERE r.post_id IS NULL
+  LOOP
+    IF rt.uid IS NOT NULL THEN
+      INSERT INTO posts (user_id, club_id, tipo, contenido)
+      VALUES (rt.uid, rt.club_id, 'club', '🗺️ ' || rt.nombre)
+      RETURNING id INTO new_post_id;
+      UPDATE routes SET post_id = new_post_id WHERE id = rt.id;
+    END IF;
   END LOOP;
 END $$;
 
