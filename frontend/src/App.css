@@ -70,11 +70,11 @@ button { cursor: pointer; font-family: inherit; }
 /* Post Card */
 .post-card { background: var(--bg2); border-radius: 10px; padding: 0.9rem; margin-bottom: 0.75rem; border: 0.5px solid var(--border); }
 .post-header { display: flex; align-items: flex-start; gap: 0.65rem; margin-bottom: 0.6rem; }
-.post-meta { flex: 1; min-width: 0; }
-.post-username { font-size: 0.93rem; font-weight: 700; display: block; }
-.club-tag { font-size: 0.76rem; color: var(--purple-mid); display: block; margin-top: 2px; }
+.post-meta { flex: 1; min-width: 0; border-left: 2px solid var(--purple); padding-left: 0.55rem; }
+.post-username { font-size: 0.93rem; font-weight: 700; display: block; text-align: left; }
+.club-tag { font-size: 0.76rem; color: var(--purple-mid); display: block; margin-top: 2px; text-align: left; }
 .post-time { font-size: 0.73rem; color: var(--text3); flex-shrink: 0; align-self: flex-start; margin-top: 2px; }
-.post-content { font-size: 0.88rem; line-height: 1.55; margin-bottom: 0.6rem; white-space: pre-wrap; }
+.post-content { font-size: 0.88rem; line-height: 1.55; margin-bottom: 0.6rem; white-space: pre-wrap; text-align: left; }
 .post-img { width: 100%; border-radius: 8px; margin-bottom: 0.6rem; max-height: 400px; object-fit: cover; }
 .post-actions { display: flex; gap: 1rem; }
 .action-btn { background: none; border: none; color: var(--text3); font-size: 0.85rem; padding: 0.25rem 0; }
