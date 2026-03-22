@@ -27,8 +27,10 @@ export default function IntroScreen({ onDone }) {
       <video
         ref={videoRef}
         src="/introVid.mp4"
+        autoPlay
         muted
         playsInline
+        preload="auto"
         onLoadedMetadata={handleLoadedMetadata}
         className="intro-video"
       />
