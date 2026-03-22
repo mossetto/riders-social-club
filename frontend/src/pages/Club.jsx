@@ -301,7 +301,7 @@ export default function Club() {
                         {ev.yo_participo ? 'No participar' : 'Anotarse'}
                       </button>
                     )}
-                    <button className="btn-secondary" style={{ fontSize: '0.8rem' }} onClick={() => handleVerParticipantes(ev.id)}>
+                    <button className="btn-link" style={{ fontSize: '0.82rem' }} onClick={() => handleVerParticipantes(ev.id)}>
                       {expandedParticipants === ev.id ? 'Ocultar' : `Ver participantes (${ev.participantes_count || 0})`}
                     </button>
                     {canCreateEvent && (

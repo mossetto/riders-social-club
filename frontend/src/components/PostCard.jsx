@@ -33,8 +33,8 @@ export default function PostCard({ post, onDelete }) {
               {post.club.nombre} · {post.club.rol}
             </Link>
           )}
-          <span className="post-time">{timeAgo(post.created_at)}</span>
         </div>
+        <span className="post-time">{timeAgo(post.created_at)}</span>
         {post.club && (
           <Link to={`/club/${post.club.id}`} className="post-club-escudo">
             {post.club.escudo_url

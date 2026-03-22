@@ -170,6 +170,28 @@ CREATE TABLE IF NOT EXISTS event_participants (
   UNIQUE(event_id, user_id)
 );
 
+-- Backfill: crear posts para eventos y rutas que no tienen post_id
+DO $$
+DECLARE
+  ev RECORD;
+  rt RECORD;
+  new_post_id INTEGER;
+BEGIN
+  FOR ev IN SELECT * FROM events WHERE post_id IS NULL AND user_id IS NOT NULL LOOP
+    INSERT INTO posts (user_id, club_id, tipo, contenido)
+    VALUES (ev.user_id, ev.club_id, 'club', '📅 ' || ev.titulo)
+    RETURNING id INTO new_post_id;
+    UPDATE events SET post_id = new_post_id WHERE id = ev.id;
+  END LOOP;
+
+  FOR rt IN SELECT * FROM routes WHERE post_id IS NULL AND user_id IS NOT NULL LOOP
+    INSERT INTO posts (user_id, club_id, tipo, contenido)
+    VALUES (rt.user_id, rt.club_id, 'club', '🗺️ ' || rt.nombre)
+    RETURNING id INTO new_post_id;
+    UPDATE routes SET post_id = new_post_id WHERE id = rt.id;
+  END LOOP;
+END $$;
+
 -- Índices para performance
 CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id);
 CREATE INDEX IF NOT EXISTS idx_posts_club_id ON posts(club_id);

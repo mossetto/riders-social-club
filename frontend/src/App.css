@@ -73,7 +73,7 @@ button { cursor: pointer; font-family: inherit; }
 .post-meta { flex: 1; min-width: 0; }
 .post-username { font-size: 0.93rem; font-weight: 700; display: block; }
 .club-tag { font-size: 0.76rem; color: var(--purple-mid); display: block; margin-top: 2px; }
-.post-time { font-size: 0.73rem; color: var(--text3); display: block; margin-top: 2px; }
+.post-time { font-size: 0.73rem; color: var(--text3); flex-shrink: 0; align-self: flex-start; margin-top: 2px; }
 .post-content { font-size: 0.88rem; line-height: 1.55; margin-bottom: 0.6rem; white-space: pre-wrap; }
 .post-img { width: 100%; border-radius: 8px; margin-bottom: 0.6rem; max-height: 400px; object-fit: cover; }
 .post-actions { display: flex; gap: 1rem; }
