@@ -17,8 +17,8 @@ export default function Register() {
     }
     setLoading(true)
     try {
-      await register(form.email, form.password, form.username)
-      navigate('/')
+      const newUser = await register(form.email, form.password, form.username)
+      navigate(`/perfil/${newUser.id}`)
     } catch (err) {
       setError(err.response?.data?.error || 'Error al registrarse')
     } finally {

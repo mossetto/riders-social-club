@@ -61,7 +61,7 @@ export default function Perfil() {
           <h2>{profile.username}</h2>
           {profile.bio && <p className="perfil-bio">{profile.bio}</p>}
           {profile.motos?.[0] && (
-            <p className="perfil-moto-txt">🏍 {profile.motos[0].apodo} · {profile.motos[0].modelo}</p>
+            <p className="perfil-moto-txt">🏍 {profile.motos[0].apodo} · {[profile.motos[0].marca, profile.motos[0].modelo].filter(Boolean).join(' ')}</p>
           )}
           {profile.whatsapp && <p className="perfil-contacto">WhatsApp: {profile.whatsapp}</p>}
           {profile.telegram && <p className="perfil-contacto">Telegram: {profile.telegram}</p>}
@@ -82,11 +82,11 @@ export default function Perfil() {
       {editing && isMe && (
         <form className="edit-form" onSubmit={handleSaveProfile} encType="multipart/form-data">
           <h3>Editar perfil</h3>
-          <input name="username" defaultValue={profile.username} placeholder="Username" />
-          <textarea name="bio" defaultValue={profile.bio} placeholder="Bio" rows={3} />
-          <input name="whatsapp" defaultValue={profile.whatsapp} placeholder="WhatsApp" />
-          <input name="telegram" defaultValue={profile.telegram} placeholder="Telegram" />
-          <label className="file-label">Foto de perfil <input type="file" name="avatar" accept="image/*" /></label>
+          <input name="username" defaultValue={profile.username} placeholder="Nombre visible" />
+          <textarea name="bio" defaultValue={profile.bio} placeholder="Presentación o tu slogan (Opcional)" rows={3} />
+          <input name="whatsapp" defaultValue={profile.whatsapp} placeholder="WhatsApp (Opcional)" />
+          <input name="telegram" defaultValue={profile.telegram} placeholder="Telegram (Opcional)" />
+          <label className="file-label">Foto de perfil (Opcional) <input type="file" name="avatar" accept="image/*" /></label>
           <button type="submit" className="btn-primary">Guardar</button>
         </form>
       )}
@@ -95,7 +95,8 @@ export default function Perfil() {
         <form className="edit-form" onSubmit={handleSaveMoto} encType="multipart/form-data">
           <h3>{profile.motos?.[0] ? 'Editar moto' : 'Agregar moto'}</h3>
           <input name="apodo" defaultValue={profile.motos?.[0]?.apodo} placeholder="Apodo de la moto" />
-          <input name="modelo" defaultValue={profile.motos?.[0]?.modelo} placeholder="Modelo" />
+          <input name="marca" defaultValue={profile.motos?.[0]?.marca} placeholder="Marca (ej: Honda)" />
+          <input name="modelo" defaultValue={profile.motos?.[0]?.modelo} placeholder="Modelo (ej: CB 500F)" />
           <label className="file-label">Foto de moto <input type="file" name="foto" accept="image/*" /></label>
           <button type="submit" className="btn-primary">Guardar</button>
         </form>

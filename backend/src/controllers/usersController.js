@@ -53,7 +53,7 @@ async function updateProfile(req, res) {
 }
 
 async function addMoto(req, res) {
-  const { apodo, modelo } = req.body
+  const { apodo, marca, modelo } = req.body
   const foto_url = req.file?.path || null
 
   try {
@@ -62,13 +62,13 @@ async function addMoto(req, res) {
     let result
     if (existing.rows.length) {
       result = await pool.query(
-        'UPDATE motos SET apodo = $1, modelo = $2, foto_url = COALESCE($3, foto_url) WHERE user_id = $4 RETURNING *',
-        [apodo, modelo, foto_url, req.user.id]
+        'UPDATE motos SET apodo = $1, marca = $2, modelo = $3, foto_url = COALESCE($4, foto_url) WHERE user_id = $5 RETURNING *',
+        [apodo, marca, modelo, foto_url, req.user.id]
       )
     } else {
       result = await pool.query(
-        'INSERT INTO motos (user_id, apodo, modelo, foto_url) VALUES ($1, $2, $3, $4) RETURNING *',
-        [req.user.id, apodo, modelo, foto_url]
+        'INSERT INTO motos (user_id, apodo, marca, modelo, foto_url) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+        [req.user.id, apodo, marca, modelo, foto_url]
       )
     }
     res.json(result.rows[0])

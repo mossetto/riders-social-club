@@ -113,6 +113,9 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='events' AND column_name='user_id') THEN
     ALTER TABLE events ADD COLUMN user_id INTEGER REFERENCES users(id) ON DELETE SET NULL;
   END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='motos' AND column_name='marca') THEN
+    ALTER TABLE motos ADD COLUMN marca VARCHAR(100);
+  END IF;
 END $$;
 
 -- Índices para performance
