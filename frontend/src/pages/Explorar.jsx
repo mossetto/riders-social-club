@@ -9,7 +9,7 @@ import { getBandera } from '../components/PaisSelector'
 
 export default function Explorar() {
   const { user } = useAuth()
-  const [tab, setTab] = useState('clubes')
+  const [tab, setTab] = useState('eventos')
 
   // Tab Clubes
   const [allClubs, setAllClubs] = useState([])
@@ -97,10 +97,10 @@ export default function Explorar() {
   return (
     <div className="page">
       <div className="tabs">
-        <button className={tab === 'clubes' ? 'tab active' : 'tab'} onClick={() => setTab('clubes')}>Clubes</button>
-        <button className={tab === 'miembros' ? 'tab active' : 'tab'} onClick={() => setTab('miembros')}>Miembros</button>
-        <button className={tab === 'moto' ? 'tab active' : 'tab'} onClick={() => setTab('moto')}>Por moto</button>
         <button className={tab === 'eventos' ? 'tab active' : 'tab'} onClick={() => setTab('eventos')}>Eventos</button>
+        <button className={tab === 'clubes' ? 'tab active' : 'tab'} onClick={() => setTab('clubes')}>Clubes</button>
+        <button className={tab === 'miembros' ? 'tab active' : 'tab'} onClick={() => setTab('miembros')}>Usuarios</button>
+        <button className={tab === 'moto' ? 'tab active' : 'tab'} onClick={() => setTab('moto')}>Por moto</button>
       </div>
 
       {tab === 'clubes' && (() => {
