@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import introVid from '../assets/introVid.mp4'
 
 const VIDEO_DURATION = 5    // segundos totales del video
 const DISPLAY_MS = 2000     // cuánto dura la intro visible
@@ -26,7 +27,7 @@ export default function IntroScreen({ onDone }) {
     <div className={`intro-screen${fading ? ' intro-fading' : ''}`}>
       <video
         ref={videoRef}
-        src="/introVid.mp4"
+        src={introVid}
         autoPlay
         muted
         playsInline
