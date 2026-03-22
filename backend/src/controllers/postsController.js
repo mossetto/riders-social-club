@@ -18,6 +18,15 @@ const POST_SELECT = `
 
 async function getClubPosts(req, res) {
   try {
+    const club = await pool.query('SELECT tipo FROM clubs WHERE id = $1', [req.params.clubId])
+    if (!club.rows.length) return res.status(404).json({ error: 'Club no encontrado' })
+    if (club.rows[0].tipo === 'privado') {
+      if (!req.user) return res.status(403).json({ error: 'Club privado' })
+      const member = await pool.query(
+        `SELECT id FROM club_members WHERE club_id = $1 AND user_id = $2 AND estado = 'activo'`,
+        [req.params.clubId, req.user.id])
+      if (!member.rows.length) return res.status(403).json({ error: 'Club privado' })
+    }
     const result = await pool.query(
       `${POST_SELECT} WHERE p.club_id = $1 ORDER BY p.created_at DESC LIMIT 50`,
       [req.params.clubId])
