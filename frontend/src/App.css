@@ -238,6 +238,8 @@ button { cursor: pointer; font-family: inherit; }
 
 /* Config section */
 .config-section { margin-bottom: 1rem; }
+.config-toggle { width: 100%; display: flex; justify-content: space-between; align-items: center; background: var(--bg3); border: 0.5px solid var(--border); border-radius: 8px; padding: 0.7rem 1rem; font-size: 0.9rem; font-weight: 600; color: var(--text); margin-top: 0.5rem; }
+.config-panel { border: 0.5px solid var(--border); border-radius: 8px; padding: 1rem; margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.25rem; }
 
 /* btn-link */
 .btn-link { color: var(--purple-mid); font-size: 0.9rem; text-decoration: underline; background: none; border: none; cursor: pointer; }

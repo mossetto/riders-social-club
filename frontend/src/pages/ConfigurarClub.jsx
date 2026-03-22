@@ -33,6 +33,7 @@ export default function ConfigurarClub() {
   const [error, setError] = useState('')
   const [club, setClub] = useState(null)
   const [pais, setPais] = useState('')
+  const [showControles, setShowControles] = useState(false)
   const [config, setConfig] = useState({
     config_rutas: 'cualquiera',
     config_salidas: 'cualquiera',
@@ -80,45 +81,59 @@ export default function ConfigurarClub() {
       <h2 className="page-title">Configurar club</h2>
       <form className="edit-form" onSubmit={handleSubmit} encType="multipart/form-data">
         <h3 style={{ fontSize: '0.9rem', color: 'var(--text2)', marginBottom: '0.25rem' }}>Información general</h3>
+        <label className="input-label">Nombre del club *</label>
         <input name="nombre" defaultValue={club?.nombre} placeholder="Nombre del club" required />
+        <label className="input-label">Slogan</label>
         <input name="slogan" defaultValue={club?.slogan} placeholder="Slogan (Opcional)" />
+        <label className="input-label">País</label>
         <PaisSelector value={pais} onChange={setPais} placeholder="País (Opcional)" />
+        <label className="input-label">Provincia / Estado / Ciudad</label>
         <input name="provincia" defaultValue={club?.provincia} placeholder="Provincia / Estado / Ciudad (Opcional)" />
+        <label className="input-label">Tipo de club</label>
         <select name="tipo" defaultValue={club?.tipo || 'publico'}>
           <option value="publico">Público</option>
           <option value="privado">Privado</option>
         </select>
-        <label className="file-label">Cambiar escudo / estandarte <input type="file" name="escudo" accept="image/*" /></label>
-        <label className="file-label">Cambiar foto de portada <input type="file" name="portada" accept="image/*" /></label>
+        <label className="file-label">Escudo / estandarte <input type="file" name="escudo" accept="image/*" /></label>
+        <label className="file-label">Foto de portada <input type="file" name="portada" accept="image/*" /></label>
 
-        <div style={{ borderTop: '0.5px solid var(--border)', paddingTop: '1rem', marginTop: '0.5rem' }}>
-          <h3 style={{ fontSize: '0.9rem', marginBottom: '1rem' }}>Control de miembros</h3>
+        <button
+          type="button"
+          className="config-toggle"
+          onClick={() => setShowControles(v => !v)}
+        >
+          <span>Control de miembros</span>
+          <span>{showControles ? '▲' : '▼'}</span>
+        </button>
 
-          <ConfigRadio
-            label="¿Quién puede agregar rutas?"
-            name="config_rutas"
-            value={config.config_rutas}
-            onChange={v => setConfig(c => ({ ...c, config_rutas: v }))}
-          />
-          <ConfigRadio
-            label="¿Quién puede crear salidas?"
-            name="config_salidas"
-            value={config.config_salidas}
-            onChange={v => setConfig(c => ({ ...c, config_salidas: v }))}
-          />
-          <ConfigRadio
-            label="¿Quién puede aprobar ingresos de miembros?"
-            name="config_ingreso"
-            value={config.config_ingreso}
-            onChange={v => setConfig(c => ({ ...c, config_ingreso: v }))}
-          />
-          <ConfigRadio
-            label="¿Quién puede asignar roles a los miembros?"
-            name="config_roles"
-            value={config.config_roles}
-            onChange={v => setConfig(c => ({ ...c, config_roles: v }))}
-          />
-        </div>
+        {showControles && (
+          <div className="config-panel">
+            <ConfigRadio
+              label="¿Quién puede agregar rutas?"
+              name="config_rutas"
+              value={config.config_rutas}
+              onChange={v => setConfig(c => ({ ...c, config_rutas: v }))}
+            />
+            <ConfigRadio
+              label="¿Quién puede crear salidas?"
+              name="config_salidas"
+              value={config.config_salidas}
+              onChange={v => setConfig(c => ({ ...c, config_salidas: v }))}
+            />
+            <ConfigRadio
+              label="¿Quién puede aprobar ingresos de miembros?"
+              name="config_ingreso"
+              value={config.config_ingreso}
+              onChange={v => setConfig(c => ({ ...c, config_ingreso: v }))}
+            />
+            <ConfigRadio
+              label="¿Quién puede asignar roles a los miembros?"
+              name="config_roles"
+              value={config.config_roles}
+              onChange={v => setConfig(c => ({ ...c, config_roles: v }))}
+            />
+          </div>
+        )}
 
         {error && <p className="error">{error}</p>}
         <div className="form-actions">
