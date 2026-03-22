@@ -66,12 +66,21 @@ export default function Club() {
 
   useEffect(() => { loadAll() }, [id])
 
+  // Sincronizar tab con URL params (cuando se navega desde Ver Detalles)
   useEffect(() => {
-    if (!highlightId || didScrollRef.current) return
+    const tabParam = searchParams.get('tab')
+    if (tabParam && tabParam !== tab) setTab(tabParam)
+  }, [searchParams])
+
+  // Reset scroll flag cuando cambia el highlight
+  useEffect(() => { didScrollRef.current = false }, [highlightId])
+
+  useEffect(() => {
+    if (!highlightId) return
     const el = document.getElementById(`item-${highlightId}`)
-    if (el) {
+    if (el && !didScrollRef.current) {
       didScrollRef.current = true
-      setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 200)
+      setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 150)
     }
   }, [tab, events, routes, highlightId])
 
@@ -273,7 +282,7 @@ export default function Club() {
       )}
 
       {tab === 'eventos' && (
-        <div>
+        <div className={editingEvent ? 'edit-focus-container' : ''}>
           {canCreateEvent && !showEventForm && (
             <div style={{ marginBottom: '1rem' }}>
               <button className="btn-primary" onClick={() => setShowEventForm(true)}>+ Crear salida</button>
@@ -310,7 +319,7 @@ export default function Club() {
           )}
 
           {events.length === 0 ? <p className="empty">No hay salidas programadas</p> : events.map(ev => (
-            <div key={ev.id} id={`item-${ev.id}`} className={`event-card${highlightId === String(ev.id) ? ' highlight-item' : ''}`}>
+            <div key={ev.id} id={`item-${ev.id}`} className={`event-card${highlightId === String(ev.id) ? ' highlight-item' : ''}${editingEvent === ev.id ? ' editing-active' : ''}`}>
               {editingEvent === ev.id ? (
                 <form onSubmit={handleSaveEditEvent} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   <input className="input" value={editEventForm.titulo} onChange={e => setEditEventForm(f => ({ ...f, titulo: e.target.value }))} required />
@@ -403,7 +412,7 @@ export default function Club() {
       )}
 
       {tab === 'rutas' && (
-        <div>
+        <div className={editingRoute ? 'edit-focus-container' : ''}>
           {canAddRoute && (
             <div style={{ marginBottom: '1rem' }}>
               <button className="btn-primary" onClick={() => setShowRouteModal(true)}>+ Agregar ruta</button>
@@ -428,7 +437,7 @@ export default function Club() {
           )}
 
           {routes.length === 0 ? <p className="empty">No hay rutas guardadas</p> : routes.map(r => (
-            <div key={r.id} id={`item-${r.id}`} className={`route-card${highlightId === String(r.id) ? ' highlight-item' : ''}`}>
+            <div key={r.id} id={`item-${r.id}`} className={`route-card${highlightId === String(r.id) ? ' highlight-item' : ''}${editingRoute === r.id ? ' editing-active' : ''}`}>
               {editingRoute === r.id ? (
                 <form onSubmit={handleSaveEditRoute} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   <input className="input" value={editRouteForm.nombre} onChange={e => setEditRouteForm(f => ({ ...f, nombre: e.target.value }))} required />

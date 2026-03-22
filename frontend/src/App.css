@@ -45,6 +45,12 @@ button { cursor: pointer; font-family: inherit; }
 .tab-badge { background: var(--purple); color: #fff; border-radius: 999px; font-size: 0.7rem; font-weight: 700; padding: 0.05rem 0.4rem; line-height: 1.4; }
 .highlight-item { outline: 2px solid var(--purple); outline-offset: 2px; border-radius: 10px; }
 
+/* Edit focus mode */
+.edit-focus-container .event-card,
+.edit-focus-container .route-card { opacity: 0.25; transition: opacity 0.2s ease; pointer-events: none; }
+.edit-focus-container .event-card.editing-active,
+.edit-focus-container .route-card.editing-active { opacity: 1; pointer-events: auto; }
+
 /* Buttons */
 .btn-primary { background: var(--purple); color: #fff; border: none; border-radius: 8px; padding: 0.65rem 1.25rem; font-size: 0.9rem; font-weight: 600; }
 .btn-primary:disabled { opacity: 0.6; }
