@@ -1,5 +1,13 @@
 const pool = require('../db/pool')
 
+function canDo(config, myRole) {
+  if (!myRole) return false
+  if (config === 'cualquiera') return true
+  if (config === 'fundador') return myRole === 'fundador'
+  if (config === 'colaboradores') return ['fundador', 'organizador', 'colaborador'].includes(myRole)
+  return false
+}
+
 async function getClubs(req, res) {
   const { provincia, pais } = req.query
   try {
@@ -74,6 +82,44 @@ async function createClub(req, res) {
   }
 }
 
+async function updateClub(req, res) {
+  const { id } = req.params
+  const { nombre, slogan, provincia, pais, tipo, config_rutas, config_salidas, config_ingreso, config_roles } = req.body
+  const escudo_url = req.files?.escudo?.[0]?.path || null
+  const portada_url = req.files?.portada?.[0]?.path || null
+  try {
+    const member = await pool.query(
+      `SELECT rol FROM club_members WHERE club_id = $1 AND user_id = $2 AND estado = 'activo'`,
+      [id, req.user.id])
+    if (!member.rows.length || member.rows[0].rol !== 'fundador') {
+      return res.status(403).json({ error: 'Solo el fundador puede configurar el club' })
+    }
+    const fields = []
+    const values = []
+    let i = 1
+    if (nombre) { fields.push(`nombre = $${i++}`); values.push(nombre) }
+    if (slogan !== undefined) { fields.push(`slogan = $${i++}`); values.push(slogan) }
+    if (provincia !== undefined) { fields.push(`provincia = $${i++}`); values.push(provincia) }
+    if (pais !== undefined) { fields.push(`pais = $${i++}`); values.push(pais) }
+    if (tipo) { fields.push(`tipo = $${i++}`); values.push(tipo) }
+    if (config_rutas) { fields.push(`config_rutas = $${i++}`); values.push(config_rutas) }
+    if (config_salidas) { fields.push(`config_salidas = $${i++}`); values.push(config_salidas) }
+    if (config_ingreso) { fields.push(`config_ingreso = $${i++}`); values.push(config_ingreso) }
+    if (config_roles) { fields.push(`config_roles = $${i++}`); values.push(config_roles) }
+    if (escudo_url) { fields.push(`escudo_url = $${i++}`); values.push(escudo_url) }
+    if (portada_url) { fields.push(`portada_url = $${i++}`); values.push(portada_url) }
+    if (!fields.length) return res.status(400).json({ error: 'Nada para actualizar' })
+    values.push(id)
+    const result = await pool.query(
+      `UPDATE clubs SET ${fields.join(', ')} WHERE id = $${i} RETURNING *`,
+      values)
+    res.json(result.rows[0])
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Error interno' })
+  }
+}
+
 async function joinClub(req, res) {
   const { id } = req.params
   try {
@@ -100,12 +146,24 @@ async function updateMember(req, res) {
   const { id, userId } = req.params
   const { rol, estado } = req.body
   try {
+    const club = await pool.query('SELECT config_roles, config_ingreso FROM clubs WHERE id = $1', [id])
+    if (!club.rows.length) return res.status(404).json({ error: 'Club no encontrado' })
+
     const requester = await pool.query(
       'SELECT rol FROM club_members WHERE club_id = $1 AND user_id = $2 AND estado = $3',
       [id, req.user.id, 'activo'])
-    if (!requester.rows.length || !['fundador','organizador'].includes(requester.rows[0].rol)) {
-      return res.status(403).json({ error: 'Sin permisos' })
+    if (!requester.rows.length) return res.status(403).json({ error: 'Sin permisos' })
+
+    const myRole = requester.rows[0].rol
+    const { config_roles, config_ingreso } = club.rows[0]
+
+    if (rol && !canDo(config_roles || 'fundador', myRole)) {
+      return res.status(403).json({ error: 'Sin permisos para cambiar roles' })
     }
+    if (estado && !canDo(config_ingreso || 'fundador', myRole)) {
+      return res.status(403).json({ error: 'Sin permisos para gestionar ingresos' })
+    }
+
     const fields = []
     const values = []
     if (rol) { fields.push(`rol = $${fields.length+1}`); values.push(rol) }
@@ -142,4 +200,4 @@ async function getMyClubes(req, res) {
   }
 }
 
-module.exports = { getClubs, getClub, createClub, joinClub, updateMember, getMyClubes }
+module.exports = { getClubs, getClub, createClub, updateClub, joinClub, updateMember, getMyClubes, canDo }

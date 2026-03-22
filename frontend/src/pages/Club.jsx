@@ -1,15 +1,24 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { getClub, joinClub, getClubEvents, getRoutes, createEvent, addRoute } from '../api/clubs'
+import { useParams, Link, useNavigate } from 'react-router-dom'
+import { getClub, joinClub, getClubEvents, getRoutes, createEvent, addRoute, joinEvent, leaveEvent, getEventParticipants, updateEvent, deleteEvent, updateMember } from '../api/clubs'
 import { useAuth } from '../context/AuthContext'
 import { getBandera } from '../components/PaisSelector'
 import PostCard from '../components/PostCard'
 import CreatePost from '../components/CreatePost'
 import { getFeed, deletePost } from '../api/posts'
 
+function canDo(config, myRole) {
+  if (!myRole) return false
+  if (config === 'cualquiera') return true
+  if (config === 'fundador') return myRole === 'fundador'
+  if (config === 'colaboradores') return ['fundador', 'organizador', 'colaborador'].includes(myRole)
+  return false
+}
+
 export default function Club() {
   const { id } = useParams()
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [club, setClub] = useState(null)
   const [posts, setPosts] = useState([])
   const [events, setEvents] = useState([])
@@ -19,8 +28,16 @@ export default function Club() {
 
   // Crear evento
   const [showEventForm, setShowEventForm] = useState(false)
-  const [eventForm, setEventForm] = useState({ titulo: '', descripcion: '', fecha_salida: '', punto_encuentro: '', destino: '', ruta_id: '' })
+  const [eventForm, setEventForm] = useState({ titulo: '', descripcion: '', fecha_salida: '', punto_encuentro: '', destino: '', ruta_id: '', es_publico: false })
   const [savingEvent, setSavingEvent] = useState(false)
+
+  // Editar evento
+  const [editingEvent, setEditingEvent] = useState(null)
+  const [editEventForm, setEditEventForm] = useState({})
+
+  // Participantes
+  const [expandedParticipants, setExpandedParticipants] = useState(null)
+  const [participantsList, setParticipantsList] = useState([])
 
   // Agregar ruta
   const [showRouteModal, setShowRouteModal] = useState(false)
@@ -37,7 +54,6 @@ export default function Club() {
       setClub(clubRes.data)
       setEvents(eventsRes.data)
       setRoutes(routesRes.data)
-
       const myMembership = clubRes.data.members?.find(m => m.id === user?.id)
       setJoined(!!myMembership)
     } catch {}
@@ -64,12 +80,9 @@ export default function Club() {
     e.preventDefault()
     setSavingEvent(true)
     try {
-      await createEvent(id, {
-        ...eventForm,
-        ruta_id: eventForm.ruta_id || undefined
-      })
+      await createEvent(id, { ...eventForm, ruta_id: eventForm.ruta_id || undefined })
       setShowEventForm(false)
-      setEventForm({ titulo: '', descripcion: '', fecha_salida: '', punto_encuentro: '', destino: '', ruta_id: '' })
+      setEventForm({ titulo: '', descripcion: '', fecha_salida: '', punto_encuentro: '', destino: '', ruta_id: '', es_publico: false })
       const res = await getClubEvents(id)
       setEvents(res.data)
     } catch {}
@@ -89,12 +102,63 @@ export default function Club() {
     setSavingRoute(false)
   }
 
+  async function handleToggleParticipacion(ev) {
+    try {
+      if (ev.yo_participo) {
+        await leaveEvent(id, ev.id)
+      } else {
+        await joinEvent(id, ev.id)
+      }
+      const res = await getClubEvents(id)
+      setEvents(res.data)
+    } catch {}
+  }
+
+  async function handleVerParticipantes(eventId) {
+    if (expandedParticipants === eventId) {
+      setExpandedParticipants(null)
+      return
+    }
+    try {
+      const { data } = await getEventParticipants(id, eventId)
+      setParticipantsList(data)
+      setExpandedParticipants(eventId)
+    } catch {}
+  }
+
+  async function handleSaveEditEvent(e) {
+    e.preventDefault()
+    try {
+      await updateEvent(id, editingEvent, editEventForm)
+      setEditingEvent(null)
+      const res = await getClubEvents(id)
+      setEvents(res.data)
+    } catch {}
+  }
+
+  async function handleDeleteEvent(eventId) {
+    if (!window.confirm('¿Eliminar esta salida?')) return
+    try {
+      await deleteEvent(id, eventId)
+      setEvents(ev => ev.filter(e => e.id !== eventId))
+    } catch {}
+  }
+
+  async function handleChangeRol(userId, rol) {
+    try {
+      await updateMember(id, userId, { rol })
+      loadAll()
+    } catch {}
+  }
+
   if (!club) return <div className="loading">Cargando...</div>
 
   const myRole = club.members?.find(m => m.id === user?.id)?.rol
-  const canPost = ['fundador','organizador','colaborador','miembro'].includes(myRole)
-  const canCreateEvent = ['fundador','organizador','colaborador'].includes(myRole)
-  const canAddRoute = !!myRole
+  const canPost = !!myRole
+  const canCreateEvent = canDo(club.config_salidas || 'cualquiera', myRole)
+  const canAddRoute = canDo(club.config_rutas || 'cualquiera', myRole)
+  const canManageRoles = canDo(club.config_roles || 'fundador', myRole)
+  const isFundador = myRole === 'fundador'
 
   return (
     <div className="page">
@@ -107,7 +171,7 @@ export default function Club() {
         <div className="club-escudo-lg">
           {club.escudo_url ? <img src={club.escudo_url} alt={club.nombre} /> : <span>{club.nombre.slice(0,2).toUpperCase()}</span>}
         </div>
-        <div>
+        <div style={{ flex: 1 }}>
           <h1>{club.nombre}</h1>
           {club.slogan && <p className="club-slogan">{club.slogan}</p>}
           <p className="club-meta">
@@ -117,8 +181,13 @@ export default function Club() {
             {` · ${club.tipo}`}
           </p>
           {myRole && <span className="role-badge">{myRole}</span>}
-          {!joined && user && <button className="btn-primary" onClick={handleJoin}>Solicitar ingreso</button>}
+          {!joined && user && <button className="btn-primary" style={{ marginTop: '0.5rem' }} onClick={handleJoin}>Solicitar ingreso</button>}
         </div>
+        {isFundador && (
+          <button className="btn-secondary" style={{ flexShrink: 0 }} onClick={() => navigate(`/club/${id}/configurar`)}>
+            ⚙️ Configurar club
+          </button>
+        )}
       </div>
 
       <div className="tabs">
@@ -144,85 +213,116 @@ export default function Club() {
 
       {tab === 'eventos' && (
         <div>
-          {canCreateEvent && (
+          {canCreateEvent && !showEventForm && (
             <div style={{ marginBottom: '1rem' }}>
-              {!showEventForm
-                ? <button className="btn-primary" onClick={() => setShowEventForm(true)}>+ Crear salida</button>
-                : (
-                  <form className="form-card" onSubmit={handleCreateEvent}>
-                    <h3 style={{ marginBottom: '1rem' }}>Nueva salida</h3>
-                    <input
-                      className="input"
-                      placeholder="Título *"
-                      value={eventForm.titulo}
-                      onChange={e => setEventForm(f => ({ ...f, titulo: e.target.value }))}
-                      required
-                    />
-                    <label className="input-label">Fecha y hora *</label>
-                    <input
-                      className="input"
-                      type="datetime-local"
-                      value={eventForm.fecha_salida}
-                      onChange={e => setEventForm(f => ({ ...f, fecha_salida: e.target.value }))}
-                      required
-                    />
-                    <textarea
-                      className="input"
-                      placeholder="Descripción (opcional)"
-                      rows={3}
-                      value={eventForm.descripcion}
-                      onChange={e => setEventForm(f => ({ ...f, descripcion: e.target.value }))}
-                    />
-                    <input
-                      className="input"
-                      placeholder="Punto de encuentro (opcional)"
-                      value={eventForm.punto_encuentro}
-                      onChange={e => setEventForm(f => ({ ...f, punto_encuentro: e.target.value }))}
-                    />
-                    <input
-                      className="input"
-                      placeholder="Destino (opcional)"
-                      value={eventForm.destino}
-                      onChange={e => setEventForm(f => ({ ...f, destino: e.target.value }))}
-                    />
-                    {routes.length > 0 && (
-                      <>
-                        <label className="input-label">Ruta del club (opcional)</label>
-                        <select
-                          className="input"
-                          value={eventForm.ruta_id}
-                          onChange={e => setEventForm(f => ({ ...f, ruta_id: e.target.value }))}
-                        >
-                          <option value="">Sin ruta</option>
-                          {routes.map(r => (
-                            <option key={r.id} value={r.id}>{r.nombre}</option>
-                          ))}
-                        </select>
-                      </>
-                    )}
-                    <div className="form-actions">
-                      <button type="submit" className="btn-primary" disabled={savingEvent}>
-                        {savingEvent ? 'Guardando...' : 'Crear salida'}
-                      </button>
-                      <button type="button" className="btn-secondary" onClick={() => setShowEventForm(false)}>Cancelar</button>
-                    </div>
-                  </form>
-                )
-              }
+              <button className="btn-primary" onClick={() => setShowEventForm(true)}>+ Crear salida</button>
             </div>
           )}
 
-          {events.length === 0 ? <p className="empty">No hay salidas programadas</p> : events.map(e => (
-            <div key={e.id} className="event-card">
-              <h3>{e.titulo}</h3>
-              <p className="event-date">{new Date(e.fecha_salida).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</p>
-              {e.punto_encuentro && <p>📍 {e.punto_encuentro}{e.destino ? ` → ${e.destino}` : ''}</p>}
-              {e.descripcion && <p>{e.descripcion}</p>}
-              {e.ruta && (
-                <a href={e.ruta.maps_url} target="_blank" rel="noopener noreferrer" className="map-link">🗺️ Ver ruta: {e.ruta.nombre}</a>
+          {showEventForm && (
+            <form className="form-card" onSubmit={handleCreateEvent}>
+              <h3 style={{ marginBottom: '0.5rem' }}>Nueva salida</h3>
+              <input className="input" placeholder="Título *" value={eventForm.titulo} onChange={e => setEventForm(f => ({ ...f, titulo: e.target.value }))} required />
+              <label className="input-label">Fecha y hora *</label>
+              <input className="input" type="datetime-local" value={eventForm.fecha_salida} onChange={e => setEventForm(f => ({ ...f, fecha_salida: e.target.value }))} required />
+              <textarea className="input" placeholder="Descripción (opcional)" rows={3} value={eventForm.descripcion} onChange={e => setEventForm(f => ({ ...f, descripcion: e.target.value }))} />
+              <input className="input" placeholder="Punto de encuentro (opcional)" value={eventForm.punto_encuentro} onChange={e => setEventForm(f => ({ ...f, punto_encuentro: e.target.value }))} />
+              <input className="input" placeholder="Destino (opcional)" value={eventForm.destino} onChange={e => setEventForm(f => ({ ...f, destino: e.target.value }))} />
+              {routes.length > 0 && (
+                <>
+                  <label className="input-label">Ruta del club (opcional)</label>
+                  <select className="input" value={eventForm.ruta_id} onChange={e => setEventForm(f => ({ ...f, ruta_id: e.target.value }))}>
+                    <option value="">Sin ruta</option>
+                    {routes.map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}
+                  </select>
+                </>
               )}
-              {!e.ruta && e.ruta_url && (
-                <a href={e.ruta_url} target="_blank" rel="noopener noreferrer" className="map-link">🗺️ Ver ruta en Google Maps</a>
+              <label className="vis-option" style={{ marginTop: '0.25rem' }}>
+                <input type="checkbox" checked={eventForm.es_publico} onChange={e => setEventForm(f => ({ ...f, es_publico: e.target.checked }))} />
+                Evento público (visible en el explorador de eventos)
+              </label>
+              <div className="form-actions">
+                <button type="submit" className="btn-primary" disabled={savingEvent}>{savingEvent ? 'Guardando...' : 'Crear salida'}</button>
+                <button type="button" className="btn-secondary" onClick={() => setShowEventForm(false)}>Cancelar</button>
+              </div>
+            </form>
+          )}
+
+          {events.length === 0 ? <p className="empty">No hay salidas programadas</p> : events.map(ev => (
+            <div key={ev.id} className="event-card">
+              {editingEvent === ev.id ? (
+                <form onSubmit={handleSaveEditEvent} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <input className="input" value={editEventForm.titulo} onChange={e => setEditEventForm(f => ({ ...f, titulo: e.target.value }))} required />
+                  <input className="input" type="datetime-local" value={editEventForm.fecha_salida} onChange={e => setEditEventForm(f => ({ ...f, fecha_salida: e.target.value }))} required />
+                  <textarea className="input" rows={2} value={editEventForm.descripcion || ''} onChange={e => setEditEventForm(f => ({ ...f, descripcion: e.target.value }))} />
+                  <input className="input" placeholder="Punto de encuentro" value={editEventForm.punto_encuentro || ''} onChange={e => setEditEventForm(f => ({ ...f, punto_encuentro: e.target.value }))} />
+                  <input className="input" placeholder="Destino" value={editEventForm.destino || ''} onChange={e => setEditEventForm(f => ({ ...f, destino: e.target.value }))} />
+                  <div className="form-actions">
+                    <button type="submit" className="btn-primary">Guardar</button>
+                    <button type="button" className="btn-secondary" onClick={() => setEditingEvent(null)}>Cancelar</button>
+                    <button type="button" className="btn-danger" onClick={() => handleDeleteEvent(ev.id)}>Eliminar</button>
+                  </div>
+                </form>
+              ) : (
+                <>
+                  <div className="event-card-top">
+                    <div style={{ flex: 1 }}>
+                      <h3>{ev.titulo}</h3>
+                      <p className="event-date">{new Date(ev.fecha_salida).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</p>
+                    </div>
+                    {ev.creador && (
+                      <div className="event-creador">
+                        <span className="event-creador-name">{ev.creador.username}</span>
+                        <div className="avatar-sm">
+                          {ev.creador.avatar_url ? <img src={ev.creador.avatar_url} alt="" /> : <span>{ev.creador.username?.slice(0,2).toUpperCase()}</span>}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  {ev.punto_encuentro && <p style={{ fontSize: '0.85rem', marginBottom: '0.3rem' }}>📍 {ev.punto_encuentro}{ev.destino ? ` → ${ev.destino}` : ''}</p>}
+                  {ev.descripcion && <p style={{ fontSize: '0.85rem', color: 'var(--text2)', marginBottom: '0.4rem' }}>{ev.descripcion}</p>}
+                  {ev.ruta && <a href={ev.ruta.maps_url} target="_blank" rel="noopener noreferrer" className="map-link">🗺️ Ver ruta: {ev.ruta.nombre}</a>}
+                  {!ev.ruta && ev.ruta_url && <a href={ev.ruta_url} target="_blank" rel="noopener noreferrer" className="map-link">🗺️ Ver ruta en Google Maps</a>}
+
+                  <div className="event-actions">
+                    {user && (
+                      <button
+                        className={ev.yo_participo ? 'btn-secondary' : 'btn-primary-sm'}
+                        onClick={() => handleToggleParticipacion(ev)}
+                      >
+                        {ev.yo_participo ? 'No participar' : 'Anotarse'}
+                      </button>
+                    )}
+                    <button className="btn-secondary" style={{ fontSize: '0.8rem' }} onClick={() => handleVerParticipantes(ev.id)}>
+                      {expandedParticipants === ev.id ? 'Ocultar' : `Ver participantes (${ev.participantes_count || 0})`}
+                    </button>
+                    {canCreateEvent && (
+                      <button className="btn-icon" onClick={() => {
+                        setEditingEvent(ev.id)
+                        const d = new Date(ev.fecha_salida)
+                        const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+                        setEditEventForm({ titulo: ev.titulo, descripcion: ev.descripcion || '', fecha_salida: local, punto_encuentro: ev.punto_encuentro || '', destino: ev.destino || '' })
+                      }}>✏️</button>
+                    )}
+                  </div>
+
+                  {expandedParticipants === ev.id && (
+                    <div className="event-participants">
+                      {participantsList.length === 0
+                        ? <p style={{ fontSize: '0.82rem', color: 'var(--text3)' }}>Nadie anotado aún</p>
+                        : participantsList.map(p => (
+                          <Link key={p.id} to={`/perfil/${p.id}`} className="participant-row">
+                            <div className="avatar-sm">
+                              {p.avatar_url ? <img src={p.avatar_url} alt="" /> : <span>{p.username?.slice(0,2).toUpperCase()}</span>}
+                            </div>
+                            <span style={{ fontSize: '0.85rem' }}>{p.username}</span>
+                            {p.moto?.modelo && <span style={{ fontSize: '0.78rem', color: 'var(--text3)' }}>{[p.moto.marca, p.moto.modelo].filter(Boolean).join(' ')}</span>}
+                          </Link>
+                        ))
+                      }
+                    </div>
+                  )}
+                </>
               )}
             </div>
           ))}
@@ -242,32 +342,11 @@ export default function Club() {
               <div className="modal-card" onClick={e => e.stopPropagation()}>
                 <h3 style={{ marginBottom: '1rem' }}>Agregar ruta</h3>
                 <form onSubmit={handleAddRoute}>
-                  <input
-                    className="input"
-                    placeholder="Nombre de la ruta *"
-                    value={routeForm.nombre}
-                    onChange={e => setRouteForm(f => ({ ...f, nombre: e.target.value }))}
-                    required
-                  />
-                  <textarea
-                    className="input"
-                    placeholder="Descripción (opcional)"
-                    rows={2}
-                    value={routeForm.descripcion}
-                    onChange={e => setRouteForm(f => ({ ...f, descripcion: e.target.value }))}
-                  />
-                  <textarea
-                    className="input"
-                    placeholder="Pegá acá el link de una ruta de Google Maps *"
-                    rows={3}
-                    value={routeForm.maps_url}
-                    onChange={e => setRouteForm(f => ({ ...f, maps_url: e.target.value }))}
-                    required
-                  />
-                  <div className="form-actions">
-                    <button type="submit" className="btn-primary" disabled={savingRoute}>
-                      {savingRoute ? 'Guardando...' : 'Agregar'}
-                    </button>
+                  <input className="input" placeholder="Nombre de la ruta *" value={routeForm.nombre} onChange={e => setRouteForm(f => ({ ...f, nombre: e.target.value }))} required />
+                  <textarea className="input" style={{ marginTop: '0.5rem' }} placeholder="Descripción (opcional)" rows={2} value={routeForm.descripcion} onChange={e => setRouteForm(f => ({ ...f, descripcion: e.target.value }))} />
+                  <textarea className="input" style={{ marginTop: '0.5rem' }} placeholder="Pegá acá el link de una ruta de Google Maps *" rows={3} value={routeForm.maps_url} onChange={e => setRouteForm(f => ({ ...f, maps_url: e.target.value }))} required />
+                  <div className="form-actions" style={{ marginTop: '0.5rem' }}>
+                    <button type="submit" className="btn-primary" disabled={savingRoute}>{savingRoute ? 'Guardando...' : 'Agregar'}</button>
                     <button type="button" className="btn-secondary" onClick={() => setShowRouteModal(false)}>Cancelar</button>
                   </div>
                 </form>
@@ -281,16 +360,12 @@ export default function Club() {
                 <div>
                   <h3>{r.nombre}</h3>
                   {r.descripcion && <p style={{ fontSize: '0.85rem', color: 'var(--text2)', marginTop: '0.2rem' }}>{r.descripcion}</p>}
-                  {r.maps_url && (
-                    <a href={r.maps_url} target="_blank" rel="noopener noreferrer" className="map-link" style={{ marginTop: '0.5rem', display: 'inline-block' }}>🗺️ Ver en Google Maps</a>
-                  )}
+                  {r.maps_url && <a href={r.maps_url} target="_blank" rel="noopener noreferrer" className="map-link" style={{ marginTop: '0.5rem', display: 'inline-block' }}>🗺️ Ver en Google Maps</a>}
                 </div>
                 {r.agregada_por && (
                   <div className="route-autor">
                     <div className="avatar-sm">
-                      {r.agregada_por.avatar_url
-                        ? <img src={r.agregada_por.avatar_url} alt="" />
-                        : <span>{r.agregada_por.username?.slice(0,2).toUpperCase()}</span>}
+                      {r.agregada_por.avatar_url ? <img src={r.agregada_por.avatar_url} alt="" /> : <span>{r.agregada_por.username?.slice(0,2).toUpperCase()}</span>}
                     </div>
                     <span className="route-autor-name">{r.agregada_por.username}</span>
                   </div>
@@ -311,7 +386,20 @@ export default function Club() {
                 </div>
               </Link>
               <span className="member-name">{m.username}</span>
-              <span className="role-badge">{m.rol}</span>
+              {canManageRoles && m.id !== user?.id ? (
+                <select
+                  className="role-select"
+                  value={m.rol}
+                  onChange={e => handleChangeRol(m.id, e.target.value)}
+                >
+                  <option value="miembro">miembro</option>
+                  <option value="colaborador">colaborador</option>
+                  <option value="organizador">organizador</option>
+                  {isFundador && <option value="fundador">fundador</option>}
+                </select>
+              ) : (
+                <span className="role-badge">{m.rol}</span>
+              )}
             </div>
           ))}
         </div>

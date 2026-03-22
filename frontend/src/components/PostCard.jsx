@@ -35,6 +35,13 @@ export default function PostCard({ post, onDelete }) {
           )}
           <span className="post-time">{timeAgo(post.created_at)}</span>
         </div>
+        {post.club && (
+          <Link to={`/club/${post.club.id}`} className="post-club-escudo">
+            {post.club.escudo_url
+              ? <img src={post.club.escudo_url} alt={post.club.nombre} />
+              : <span>{post.club.nombre?.slice(0,2).toUpperCase()}</span>}
+          </Link>
+        )}
         {user?.id === post.user.id && (
           <button className="btn-delete" onClick={() => {
             if (window.confirm('¿Eliminar esta publicación?')) onDelete?.(post.id)

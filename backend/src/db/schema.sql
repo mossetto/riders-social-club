@@ -125,6 +125,27 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='pais') THEN
     ALTER TABLE users ADD COLUMN pais VARCHAR(100);
   END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='whatsapp_visibility') THEN
+    ALTER TABLE users ADD COLUMN whatsapp_visibility VARCHAR(10) DEFAULT 'publico';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='telegram_visibility') THEN
+    ALTER TABLE users ADD COLUMN telegram_visibility VARCHAR(10) DEFAULT 'publico';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='clubs' AND column_name='config_rutas') THEN
+    ALTER TABLE clubs ADD COLUMN config_rutas VARCHAR(15) DEFAULT 'cualquiera';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='clubs' AND column_name='config_salidas') THEN
+    ALTER TABLE clubs ADD COLUMN config_salidas VARCHAR(15) DEFAULT 'cualquiera';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='clubs' AND column_name='config_ingreso') THEN
+    ALTER TABLE clubs ADD COLUMN config_ingreso VARCHAR(15) DEFAULT 'fundador';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='clubs' AND column_name='config_roles') THEN
+    ALTER TABLE clubs ADD COLUMN config_roles VARCHAR(15) DEFAULT 'fundador';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='events' AND column_name='es_publico') THEN
+    ALTER TABLE events ADD COLUMN es_publico BOOLEAN DEFAULT false;
+  END IF;
 END $$;
 
 CREATE TABLE IF NOT EXISTS password_reset_tokens (
@@ -133,6 +154,14 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
   token      VARCHAR(255) NOT NULL UNIQUE,
   expires_at TIMESTAMP NOT NULL,
   created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS event_participants (
+  id         SERIAL PRIMARY KEY,
+  event_id   INTEGER REFERENCES events(id) ON DELETE CASCADE,
+  user_id    INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(event_id, user_id)
 );
 
 -- Índices para performance

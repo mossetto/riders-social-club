@@ -1,6 +1,8 @@
 const pool = require('../db/pool')
+const { canDo } = require('./clubsController')
 
 async function getClubEvents(req, res) {
+  const userId = req.user?.id || null
   try {
     const result = await pool.query(
       `SELECT e.*,
@@ -8,12 +10,17 @@ async function getClubEvents(req, res) {
         CASE WHEN e.ruta_id IS NOT NULL
           THEN json_build_object('id', r.id, 'nombre', r.nombre, 'maps_url', r.maps_url)
           ELSE NULL
-        END as ruta
+        END as ruta,
+        COUNT(ep.id) as participantes_count,
+        BOOL_OR(ep.user_id = $2) as yo_participo
        FROM events e
        LEFT JOIN users u ON u.id = e.user_id
        LEFT JOIN routes r ON r.id = e.ruta_id
-       WHERE e.club_id = $1 ORDER BY e.fecha_salida ASC`,
-      [req.params.clubId])
+       LEFT JOIN event_participants ep ON ep.event_id = e.id
+       WHERE e.club_id = $1
+       GROUP BY e.id, u.id, r.id
+       ORDER BY e.fecha_salida ASC`,
+      [req.params.clubId, userId])
     res.json(result.rows)
   } catch (err) {
     console.error(err)
@@ -23,32 +30,134 @@ async function getClubEvents(req, res) {
 
 async function createEvent(req, res) {
   const { clubId } = req.params
-  const { titulo, descripcion, fecha_salida, punto_encuentro, destino, paradas, ruta_url, ruta_id } = req.body
+  const { titulo, descripcion, fecha_salida, punto_encuentro, destino, paradas, ruta_url, ruta_id, es_publico } = req.body
   if (!titulo || !fecha_salida) return res.status(400).json({ error: 'Título y fecha requeridos' })
   try {
+    const club = await pool.query('SELECT config_salidas FROM clubs WHERE id = $1', [clubId])
+    if (!club.rows.length) return res.status(404).json({ error: 'Club no encontrado' })
+
     const member = await pool.query(
       `SELECT rol FROM club_members WHERE club_id = $1 AND user_id = $2 AND estado = 'activo'`,
       [clubId, req.user.id])
-    if (!member.rows.length || !['fundador','organizador','colaborador'].includes(member.rows[0].rol)) {
+    if (!member.rows.length || !canDo(club.rows[0].config_salidas || 'cualquiera', member.rows[0].rol)) {
       return res.status(403).json({ error: 'Sin permisos para crear eventos' })
     }
-    // Si hay ruta_id, usar su maps_url como ruta_url del evento
     let finalRutaUrl = ruta_url || null
     if (ruta_id) {
       const ruta = await pool.query('SELECT maps_url FROM routes WHERE id = $1 AND club_id = $2', [ruta_id, clubId])
       if (ruta.rows.length) finalRutaUrl = ruta.rows[0].maps_url
     }
     const result = await pool.query(
-      `INSERT INTO events (club_id, user_id, titulo, descripcion, fecha_salida, punto_encuentro, destino, paradas, ruta_url, ruta_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
-      [clubId, req.user.id, titulo, descripcion, fecha_salida, punto_encuentro, destino, paradas, finalRutaUrl, ruta_id || null])
-    // Post automático en el feed del club
+      `INSERT INTO events (club_id, user_id, titulo, descripcion, fecha_salida, punto_encuentro, destino, paradas, ruta_url, ruta_id, es_publico)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+      [clubId, req.user.id, titulo, descripcion, fecha_salida, punto_encuentro, destino, paradas, finalRutaUrl, ruta_id || null, es_publico === 'true' || es_publico === true])
     const fechaFmt = new Date(fecha_salida).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
     await pool.query(
       `INSERT INTO posts (user_id, club_id, tipo, contenido) VALUES ($1, $2, 'club', $3)`,
       [req.user.id, clubId, `📅 Nueva salida: **${titulo}** — ${fechaFmt}${punto_encuentro ? ` · Salida desde ${punto_encuentro}` : ''}${destino ? ` → ${destino}` : ''}`]
     )
     res.status(201).json(result.rows[0])
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Error interno' })
+  }
+}
+
+async function updateEvent(req, res) {
+  const { clubId, eventId } = req.params
+  const { titulo, descripcion, fecha_salida, punto_encuentro, destino } = req.body
+  try {
+    const member = await pool.query(
+      `SELECT rol FROM club_members WHERE club_id = $1 AND user_id = $2 AND estado = 'activo'`,
+      [clubId, req.user.id])
+    if (!member.rows.length || !['fundador','organizador','colaborador'].includes(member.rows[0].rol)) {
+      return res.status(403).json({ error: 'Sin permisos' })
+    }
+    await pool.query(
+      `UPDATE events SET titulo=$1, descripcion=$2, fecha_salida=$3, punto_encuentro=$4, destino=$5 WHERE id=$6 AND club_id=$7`,
+      [titulo, descripcion, fecha_salida, punto_encuentro, destino, eventId, clubId])
+    res.json({ message: 'Evento actualizado' })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Error interno' })
+  }
+}
+
+async function deleteEvent(req, res) {
+  const { clubId, eventId } = req.params
+  try {
+    const member = await pool.query(
+      `SELECT rol FROM club_members WHERE club_id = $1 AND user_id = $2 AND estado = 'activo'`,
+      [clubId, req.user.id])
+    if (!member.rows.length || !['fundador','organizador','colaborador'].includes(member.rows[0].rol)) {
+      return res.status(403).json({ error: 'Sin permisos' })
+    }
+    await pool.query('DELETE FROM events WHERE id = $1 AND club_id = $2', [eventId, clubId])
+    res.json({ message: 'Evento eliminado' })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Error interno' })
+  }
+}
+
+async function joinEvent(req, res) {
+  const { eventId } = req.params
+  try {
+    await pool.query(
+      'INSERT INTO event_participants (event_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+      [eventId, req.user.id])
+    res.json({ message: 'Anotado' })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Error interno' })
+  }
+}
+
+async function leaveEvent(req, res) {
+  const { eventId } = req.params
+  try {
+    await pool.query('DELETE FROM event_participants WHERE event_id = $1 AND user_id = $2', [eventId, req.user.id])
+    res.json({ message: 'Ya no participás' })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Error interno' })
+  }
+}
+
+async function getEventParticipants(req, res) {
+  const { eventId } = req.params
+  try {
+    const result = await pool.query(
+      `SELECT u.id, u.username, u.avatar_url,
+        json_build_object('id', m.id, 'apodo', m.apodo, 'foto_url', m.foto_url, 'marca', m.marca, 'modelo', m.modelo) as moto
+       FROM event_participants ep
+       JOIN users u ON u.id = ep.user_id
+       LEFT JOIN motos m ON m.user_id = u.id
+       WHERE ep.event_id = $1
+       ORDER BY ep.created_at ASC`,
+      [eventId])
+    res.json(result.rows)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Error interno' })
+  }
+}
+
+async function getPublicEvents(req, res) {
+  try {
+    const result = await pool.query(
+      `SELECT e.*,
+        json_build_object('id', u.id, 'username', u.username, 'avatar_url', u.avatar_url) as creador,
+        json_build_object('id', c.id, 'nombre', c.nombre, 'escudo_url', c.escudo_url) as club,
+        COUNT(ep.id) as participantes_count
+       FROM events e
+       JOIN clubs c ON c.id = e.club_id
+       LEFT JOIN users u ON u.id = e.user_id
+       LEFT JOIN event_participants ep ON ep.event_id = e.id
+       WHERE e.es_publico = true AND e.fecha_salida >= NOW()
+       GROUP BY e.id, u.id, c.id
+       ORDER BY e.fecha_salida ASC LIMIT 50`)
+    res.json(result.rows)
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Error interno' })
@@ -76,16 +185,18 @@ async function addRoute(req, res) {
   if (!maps_url) return res.status(400).json({ error: 'URL de ruta requerida' })
   if (!nombre) return res.status(400).json({ error: 'Nombre requerido' })
   try {
+    const club = await pool.query('SELECT config_rutas FROM clubs WHERE id = $1', [clubId])
+    if (!club.rows.length) return res.status(404).json({ error: 'Club no encontrado' })
+
     const member = await pool.query(
       `SELECT rol FROM club_members WHERE club_id = $1 AND user_id = $2 AND estado = 'activo'`,
       [clubId, req.user.id])
-    if (!member.rows.length) {
-      return res.status(403).json({ error: 'Tenés que ser miembro del club para agregar rutas' })
+    if (!member.rows.length || !canDo(club.rows[0].config_rutas || 'cualquiera', member.rows[0].rol)) {
+      return res.status(403).json({ error: 'Sin permisos para agregar rutas' })
     }
     const result = await pool.query(
       'INSERT INTO routes (club_id, user_id, nombre, descripcion, maps_url) VALUES ($1,$2,$3,$4,$5) RETURNING *',
       [clubId, req.user.id, nombre, descripcion, maps_url])
-    // Post automático en el feed del club
     await pool.query(
       `INSERT INTO posts (user_id, club_id, tipo, contenido) VALUES ($1, $2, 'club', $3)`,
       [req.user.id, clubId, `🗺️ Nueva ruta guardada: **${nombre}**${descripcion ? ` — ${descripcion}` : ''}`]
@@ -97,4 +208,4 @@ async function addRoute(req, res) {
   }
 }
 
-module.exports = { getClubEvents, createEvent, getRoutes, addRoute }
+module.exports = { getClubEvents, createEvent, updateEvent, deleteEvent, getRoutes, addRoute, joinEvent, leaveEvent, getEventParticipants, getPublicEvents }

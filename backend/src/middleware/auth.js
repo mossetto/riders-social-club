@@ -14,4 +14,15 @@ function requireAuth(req, res, next) {
   }
 }
 
-module.exports = { requireAuth }
+function optionalAuth(req, res, next) {
+  const header = req.headers.authorization
+  if (header && header.startsWith('Bearer ')) {
+    try {
+      const payload = verifyAccess(header.split(' ')[1])
+      req.user = payload
+    } catch {}
+  }
+  next()
+}
+
+module.exports = { requireAuth, optionalAuth }

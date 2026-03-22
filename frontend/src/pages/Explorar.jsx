@@ -1,22 +1,45 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import ClubCard from '../components/ClubCard'
-import { getClubs } from '../api/clubs'
+import { getClubs, getPublicEvents } from '../api/clubs'
+import { searchUsers, searchByMoto } from '../api/users'
 import { useAuth } from '../context/AuthContext'
 import api from '../api/axiosInstance'
+import { getBandera } from '../components/PaisSelector'
 
 const PROVINCIAS = ['Buenos Aires','CABA','Córdoba','Santa Fe','Mendoza','Tucumán','Salta','Neuquén','Río Negro','Chubut','Santa Cruz','Tierra del Fuego','Entre Ríos','Corrientes','Misiones','Chaco','Formosa','Santiago del Estero','La Rioja','Catamarca','San Juan','San Luis','La Pampa','Jujuy']
 
 export default function Explorar() {
   const { user } = useAuth()
+  const [tab, setTab] = useState('clubes')
+
+  // Tab Clubes
   const [clubs, setClubs] = useState([])
   const [misClubIds, setMisClubIds] = useState([])
   const [provincia, setProvincia] = useState('')
-  const [loading, setLoading] = useState(true)
+  const [loadingClubes, setLoadingClubes] = useState(true)
 
-  useEffect(() => { load() }, [provincia])
+  // Tab Miembros
+  const [queryMiembros, setQueryMiembros] = useState('')
+  const [miembros, setMiembros] = useState([])
+  const [loadingMiembros, setLoadingMiembros] = useState(false)
 
-  async function load() {
-    setLoading(true)
+  // Tab Moto
+  const [queryMoto, setQueryMoto] = useState('')
+  const [motoResults, setMotoResults] = useState([])
+  const [loadingMoto, setLoadingMoto] = useState(false)
+
+  // Tab Eventos
+  const [eventos, setEventos] = useState([])
+  const [loadingEventos, setLoadingEventos] = useState(false)
+
+  useEffect(() => {
+    if (tab === 'clubes') loadClubes()
+    if (tab === 'eventos') loadEventos()
+  }, [tab, provincia])
+
+  async function loadClubes() {
+    setLoadingClubes(true)
     try {
       const promises = [getClubs(provincia)]
       if (user) promises.push(api.get('/clubs/mine'))
@@ -24,30 +47,162 @@ export default function Explorar() {
       setClubs(results[0].data)
       if (user) setMisClubIds(results[1].data.map(c => c.id))
     } catch {}
-    setLoading(false)
+    setLoadingClubes(false)
   }
+
+  async function loadEventos() {
+    setLoadingEventos(true)
+    try {
+      const { data } = await getPublicEvents()
+      setEventos(data)
+    } catch {}
+    setLoadingEventos(false)
+  }
+
+  useEffect(() => {
+    if (tab !== 'miembros') return
+    if (queryMiembros.length < 2) { setMiembros([]); return }
+    const t = setTimeout(async () => {
+      setLoadingMiembros(true)
+      try {
+        const { data } = await searchUsers(queryMiembros)
+        setMiembros(data)
+      } catch {}
+      setLoadingMiembros(false)
+    }, 350)
+    return () => clearTimeout(t)
+  }, [queryMiembros, tab])
+
+  useEffect(() => {
+    if (tab !== 'moto') return
+    if (queryMoto.length < 2) { setMotoResults([]); return }
+    const t = setTimeout(async () => {
+      setLoadingMoto(true)
+      try {
+        const { data } = await searchByMoto(queryMoto)
+        setMotoResults(data)
+      } catch {}
+      setLoadingMoto(false)
+    }, 350)
+    return () => clearTimeout(t)
+  }, [queryMoto, tab])
 
   return (
     <div className="page">
-      <h2 className="page-title">Explorar clubes</h2>
-      <div className="filter-row">
-        <button className={!provincia ? 'filter-pill on' : 'filter-pill'} onClick={() => setProvincia('')}>Todos</button>
-        {PROVINCIAS.map(p => (
-          <button key={p} className={provincia === p ? 'filter-pill on' : 'filter-pill'} onClick={() => setProvincia(p)}>{p}</button>
-        ))}
+      <div className="tabs">
+        <button className={tab === 'clubes' ? 'tab active' : 'tab'} onClick={() => setTab('clubes')}>Clubes</button>
+        <button className={tab === 'miembros' ? 'tab active' : 'tab'} onClick={() => setTab('miembros')}>Miembros</button>
+        <button className={tab === 'moto' ? 'tab active' : 'tab'} onClick={() => setTab('moto')}>Por moto</button>
+        <button className={tab === 'eventos' ? 'tab active' : 'tab'} onClick={() => setTab('eventos')}>Eventos</button>
       </div>
-      {loading ? <div className="loading">Cargando...</div> : (
-        clubs.length === 0
-          ? <p className="empty">No hay clubes todavía</p>
-          : clubs.map(c => (
-              <ClubCard
-                key={c.id}
-                club={c}
-                isMember={misClubIds.includes(c.id)}
-                onJoin={load}
-              />
-            ))
+
+      {tab === 'clubes' && (
+        <>
+          <div className="filter-row">
+            <button className={!provincia ? 'filter-pill on' : 'filter-pill'} onClick={() => setProvincia('')}>Todos</button>
+            {PROVINCIAS.map(p => (
+              <button key={p} className={provincia === p ? 'filter-pill on' : 'filter-pill'} onClick={() => setProvincia(p)}>{p}</button>
+            ))}
+          </div>
+          {loadingClubes ? <div className="loading">Cargando...</div> : (
+            clubs.length === 0
+              ? <p className="empty">No hay clubes todavía</p>
+              : clubs.map(c => (
+                  <ClubCard key={c.id} club={c} isMember={misClubIds.includes(c.id)} onJoin={loadClubes} />
+                ))
+          )}
+        </>
+      )}
+
+      {tab === 'miembros' && (
+        <>
+          <input
+            className="input"
+            style={{ marginBottom: '1rem' }}
+            placeholder="Buscar por nombre de usuario..."
+            value={queryMiembros}
+            onChange={e => setQueryMiembros(e.target.value)}
+            autoFocus
+          />
+          {loadingMiembros && <div className="loading">Buscando...</div>}
+          {!loadingMiembros && queryMiembros.length >= 2 && miembros.length === 0 && (
+            <p className="empty">No se encontraron usuarios</p>
+          )}
+          {miembros.map(u => <UserCard key={u.id} user={u} />)}
+        </>
+      )}
+
+      {tab === 'moto' && (
+        <>
+          <input
+            className="input"
+            style={{ marginBottom: '1rem' }}
+            placeholder="Buscar por marca, modelo o apodo de moto..."
+            value={queryMoto}
+            onChange={e => setQueryMoto(e.target.value)}
+            autoFocus
+          />
+          {loadingMoto && <div className="loading">Buscando...</div>}
+          {!loadingMoto && queryMoto.length >= 2 && motoResults.length === 0 && (
+            <p className="empty">No se encontraron motos</p>
+          )}
+          {motoResults.map(u => <UserCard key={u.id} user={u} />)}
+        </>
+      )}
+
+      {tab === 'eventos' && (
+        <>
+          {loadingEventos ? <div className="loading">Cargando...</div> : (
+            eventos.length === 0
+              ? <p className="empty">No hay eventos públicos próximos</p>
+              : eventos.map(ev => <PublicEventCard key={ev.id} event={ev} />)
+          )}
+        </>
       )}
     </div>
+  )
+}
+
+function UserCard({ user }) {
+  const moto = user.motos?.[0]
+  return (
+    <Link to={`/perfil/${user.id}`} className="user-search-card">
+      <div className="avatar-sm">
+        {user.avatar_url ? <img src={user.avatar_url} alt="" /> : <span>{user.username?.slice(0,2).toUpperCase()}</span>}
+      </div>
+      <div style={{ flex: 1 }}>
+        <p style={{ fontWeight: 600, fontSize: '0.9rem' }}>{user.username}</p>
+        {user.pais && <p style={{ fontSize: '0.78rem', color: 'var(--text3)' }}>{getBandera(user.pais)} {user.pais}</p>}
+        {moto && <p style={{ fontSize: '0.78rem', color: 'var(--text2)' }}>🏍 {[moto.apodo, moto.marca, moto.modelo].filter(Boolean).join(' · ')}</p>}
+      </div>
+      {moto?.foto_url && (
+        <div className="avatar-sm">
+          <img src={moto.foto_url} alt="" />
+        </div>
+      )}
+    </Link>
+  )
+}
+
+function PublicEventCard({ event: ev }) {
+  return (
+    <Link to={`/club/${ev.club?.id}`} className="event-card" style={{ display: 'block', textDecoration: 'none' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+        <div style={{ flex: 1 }}>
+          <h3 style={{ fontSize: '0.95rem', fontWeight: 600 }}>{ev.titulo}</h3>
+          <p className="event-date">{new Date(ev.fecha_salida).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</p>
+        </div>
+        {ev.club && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+            <div className="club-escudo" style={{ width: 28, height: 28 }}>
+              {ev.club.escudo_url ? <img src={ev.club.escudo_url} alt="" /> : <span style={{ fontSize: '9px' }}>{ev.club.nombre?.slice(0,2).toUpperCase()}</span>}
+            </div>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text2)' }}>{ev.club.nombre}</span>
+          </div>
+        )}
+      </div>
+      {ev.punto_encuentro && <p style={{ fontSize: '0.82rem', marginTop: '0.3rem' }}>📍 {ev.punto_encuentro}{ev.destino ? ` → ${ev.destino}` : ''}</p>}
+      <p style={{ fontSize: '0.78rem', color: 'var(--text3)', marginTop: '0.3rem' }}>👥 {ev.participantes_count || 0} anotados</p>
+    </Link>
   )
 }

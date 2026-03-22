@@ -11,6 +11,7 @@ import Club from './pages/Club'
 import CrearClub from './pages/CrearClub'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
+import ConfigurarClub from './pages/ConfigurarClub'
 import './App.css'
 
 function PrivateRoute({ children }) {
@@ -49,6 +50,7 @@ export default function App() {
           <Route path="/perfil/:id" element={<Layout><Perfil /></Layout>} />
           <Route path="/club/:id" element={<Layout><Club /></Layout>} />
           <Route path="/crear-club" element={<PrivateRoute><Layout><CrearClub /></Layout></PrivateRoute>} />
+          <Route path="/club/:id/configurar" element={<PrivateRoute><Layout><ConfigurarClub /></Layout></PrivateRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

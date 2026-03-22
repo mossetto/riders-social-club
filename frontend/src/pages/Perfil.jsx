@@ -3,6 +3,12 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { getProfile, updateProfile, addMoto } from '../api/users'
 import { useAuth } from '../context/AuthContext'
 
+const VIS_OPTIONS = [
+  { value: 'publico', label: 'Público' },
+  { value: 'miembros', label: 'Solo miembros de mis clubes' },
+  { value: 'oculto', label: 'Oculto' },
+]
+
 export default function Perfil() {
   const { id } = useParams()
   const { user, logout } = useAuth()
@@ -10,6 +16,8 @@ export default function Perfil() {
   const [profile, setProfile] = useState(null)
   const [editing, setEditing] = useState(false)
   const [editingMoto, setEditingMoto] = useState(false)
+  const [wspVis, setWspVis] = useState('publico')
+  const [tgVis, setTgVis] = useState('publico')
   const isMe = user?.id === Number(id)
 
   useEffect(() => { load() }, [id])
@@ -18,12 +26,16 @@ export default function Perfil() {
     try {
       const { data } = await getProfile(id)
       setProfile(data)
+      setWspVis(data.whatsapp_visibility || 'publico')
+      setTgVis(data.telegram_visibility || 'publico')
     } catch {}
   }
 
   async function handleSaveProfile(e) {
     e.preventDefault()
     const fd = new FormData(e.target)
+    fd.set('whatsapp_visibility', wspVis)
+    fd.set('telegram_visibility', tgVis)
     await updateProfile(fd)
     setEditing(false)
     load()
@@ -84,8 +96,27 @@ export default function Perfil() {
           <h3>Editar perfil</h3>
           <input name="username" defaultValue={profile.username} placeholder="Nombre visible" />
           <textarea name="bio" defaultValue={profile.bio} placeholder="Presentación o tu slogan (Opcional)" rows={3} />
+
           <input name="whatsapp" defaultValue={profile.whatsapp} placeholder="WhatsApp (Opcional)" />
+          <div className="vis-group">
+            {VIS_OPTIONS.map(o => (
+              <label key={o.value} className="vis-option">
+                <input type="radio" name="whatsapp_visibility" value={o.value} checked={wspVis === o.value} onChange={() => setWspVis(o.value)} />
+                {o.label}
+              </label>
+            ))}
+          </div>
+
           <input name="telegram" defaultValue={profile.telegram} placeholder="Telegram (Opcional)" />
+          <div className="vis-group">
+            {VIS_OPTIONS.map(o => (
+              <label key={o.value} className="vis-option">
+                <input type="radio" name="telegram_visibility" value={o.value} checked={tgVis === o.value} onChange={() => setTgVis(o.value)} />
+                {o.label}
+              </label>
+            ))}
+          </div>
+
           <label className="file-label">Foto de perfil (Opcional) <input type="file" name="avatar" accept="image/*" /></label>
           <button type="submit" className="btn-primary">Guardar</button>
         </form>
