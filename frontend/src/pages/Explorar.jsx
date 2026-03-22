@@ -30,6 +30,7 @@ export default function Explorar() {
   // Tab Eventos
   const [eventos, setEventos] = useState([])
   const [loadingEventos, setLoadingEventos] = useState(false)
+  const [errorEventos, setErrorEventos] = useState('')
 
   useEffect(() => {
     if (tab === 'clubes') loadClubes()
@@ -50,10 +51,13 @@ export default function Explorar() {
 
   async function loadEventos() {
     setLoadingEventos(true)
+    setErrorEventos('')
     try {
       const { data } = await getPublicEvents()
       setEventos(data)
-    } catch {}
+    } catch (err) {
+      setErrorEventos(err?.response?.data?.error || 'Error al cargar eventos')
+    }
     setLoadingEventos(false)
   }
 
@@ -168,11 +172,12 @@ export default function Explorar() {
 
       {tab === 'eventos' && (
         <>
-          {loadingEventos ? <div className="loading">Cargando...</div> : (
-            eventos.length === 0
-              ? <p className="empty">No hay eventos públicos próximos</p>
-              : eventos.map(ev => <PublicEventCard key={ev.id} event={ev} />)
+          {loadingEventos && <div className="loading">Cargando...</div>}
+          {errorEventos && <p className="error" style={{ textAlign: 'center', padding: '1rem' }}>{errorEventos}</p>}
+          {!loadingEventos && !errorEventos && eventos.length === 0 && (
+            <p className="empty">No hay eventos públicos</p>
           )}
+          {!loadingEventos && eventos.map(ev => <PublicEventCard key={ev.id} event={ev} />)}
         </>
       )}
     </div>

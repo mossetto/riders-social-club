@@ -157,9 +157,9 @@ async function getPublicEvents(req, res) {
        JOIN clubs c ON c.id = e.club_id
        LEFT JOIN users u ON u.id = e.user_id
        LEFT JOIN event_participants ep ON ep.event_id = e.id
-       WHERE e.es_publico = true AND e.fecha_salida >= NOW() - INTERVAL '12 hours'
+       WHERE e.es_publico = true
        GROUP BY e.id, u.id, c.id
-       ORDER BY e.fecha_salida ASC LIMIT 50`)
+       ORDER BY e.fecha_salida DESC LIMIT 50`)
     res.json(result.rows)
   } catch (err) {
     console.error(err)
