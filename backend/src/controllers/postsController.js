@@ -4,9 +4,16 @@ const POST_SELECT = `
   SELECT p.id, p.tipo, p.contenido, p.imagen_url, p.video_url, p.created_at,
     json_build_object('id', u.id, 'username', u.username, 'avatar_url', u.avatar_url) as user,
     CASE WHEN p.club_id IS NOT NULL THEN
-      json_build_object('id', c.id, 'nombre', c.nombre, 'escudo_url', c.escudo_url,
-        'rol', cm.rol)
-    ELSE NULL END as club,
+      json_build_object('id', c.id, 'nombre', c.nombre, 'escudo_url', c.escudo_url, 'rol', cm.rol)
+    ELSE (
+      SELECT json_build_object('id', c2.id, 'nombre', c2.nombre, 'escudo_url', c2.escudo_url, 'rol', cm2.rol)
+      FROM club_members cm2
+      JOIN clubs c2 ON c2.id = cm2.club_id
+      WHERE cm2.user_id = p.user_id AND cm2.estado = 'activo'
+      ORDER BY CASE cm2.rol WHEN 'fundador' THEN 1 WHEN 'organizador' THEN 2 WHEN 'colaborador' THEN 3 ELSE 4 END
+      LIMIT 1
+    )
+    END as club,
     (SELECT COUNT(*) FROM likes WHERE post_id = p.id) as likes,
     (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comentarios,
     row_to_json(m) as moto
