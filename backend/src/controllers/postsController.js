@@ -16,6 +16,18 @@ const POST_SELECT = `
   LEFT JOIN clubs c ON c.id = p.club_id
   LEFT JOIN club_members cm ON cm.club_id = p.club_id AND cm.user_id = p.user_id AND cm.estado = 'activo'`
 
+async function getClubPosts(req, res) {
+  try {
+    const result = await pool.query(
+      `${POST_SELECT} WHERE p.club_id = $1 ORDER BY p.created_at DESC LIMIT 50`,
+      [req.params.clubId])
+    res.json(result.rows)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Error interno' })
+  }
+}
+
 async function getFeed(req, res) {
   const { page = 1 } = req.query
   const limit = 20
@@ -127,4 +139,4 @@ async function addComment(req, res) {
   }
 }
 
-module.exports = { getFeed, getClubsFeed, createPost, deletePost, toggleLike, getComments, addComment }
+module.exports = { getFeed, getClubsFeed, getClubPosts, createPost, deletePost, toggleLike, getComments, addComment }

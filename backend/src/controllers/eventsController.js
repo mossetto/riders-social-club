@@ -215,4 +215,49 @@ async function addRoute(req, res) {
   }
 }
 
-module.exports = { getClubEvents, createEvent, updateEvent, deleteEvent, getRoutes, addRoute, joinEvent, leaveEvent, getEventParticipants, getPublicEvents }
+async function updateRoute(req, res) {
+  const { clubId, routeId } = req.params
+  const { nombre, descripcion, maps_url } = req.body
+  try {
+    const club = await pool.query('SELECT config_rutas FROM clubs WHERE id = $1', [clubId])
+    if (!club.rows.length) return res.status(404).json({ error: 'Club no encontrado' })
+    const member = await pool.query(
+      `SELECT rol FROM club_members WHERE club_id = $1 AND user_id = $2 AND estado = 'activo'`,
+      [clubId, req.user.id])
+    const route = await pool.query('SELECT user_id FROM routes WHERE id = $1 AND club_id = $2', [routeId, clubId])
+    if (!route.rows.length) return res.status(404).json({ error: 'Ruta no encontrada' })
+    const isCreator = route.rows[0].user_id === req.user.id
+    const canEdit = isCreator || (member.rows.length && canDo(club.rows[0].config_rutas || 'cualquiera', member.rows[0].rol))
+    if (!canEdit) return res.status(403).json({ error: 'Sin permisos' })
+    await pool.query(
+      'UPDATE routes SET nombre=$1, descripcion=$2, maps_url=$3 WHERE id=$4 AND club_id=$5',
+      [nombre, descripcion, maps_url, routeId, clubId])
+    res.json({ message: 'Ruta actualizada' })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Error interno' })
+  }
+}
+
+async function deleteRoute(req, res) {
+  const { clubId, routeId } = req.params
+  try {
+    const club = await pool.query('SELECT config_rutas FROM clubs WHERE id = $1', [clubId])
+    if (!club.rows.length) return res.status(404).json({ error: 'Club no encontrado' })
+    const member = await pool.query(
+      `SELECT rol FROM club_members WHERE club_id = $1 AND user_id = $2 AND estado = 'activo'`,
+      [clubId, req.user.id])
+    const route = await pool.query('SELECT user_id FROM routes WHERE id = $1 AND club_id = $2', [routeId, clubId])
+    if (!route.rows.length) return res.status(404).json({ error: 'Ruta no encontrada' })
+    const isCreator = route.rows[0].user_id === req.user.id
+    const canEdit = isCreator || (member.rows.length && canDo(club.rows[0].config_rutas || 'cualquiera', member.rows[0].rol))
+    if (!canEdit) return res.status(403).json({ error: 'Sin permisos' })
+    await pool.query('DELETE FROM routes WHERE id = $1 AND club_id = $2', [routeId, clubId])
+    res.json({ message: 'Ruta eliminada' })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Error interno' })
+  }
+}
+
+module.exports = { getClubEvents, createEvent, updateEvent, deleteEvent, getRoutes, addRoute, updateRoute, deleteRoute, joinEvent, leaveEvent, getEventParticipants, getPublicEvents }

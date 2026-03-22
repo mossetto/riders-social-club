@@ -122,7 +122,12 @@ function CommentsSection({ postId }) {
     <div className="comments">
       {comments.map(c => (
         <div key={c.id} className="comment">
-          <span className="comment-user">{c.user?.username}</span>
+          <Link to={`/perfil/${c.user?.id}`} className="comment-avatar">
+            <div className="avatar-sm">
+              {c.user?.avatar_url ? <img src={c.user.avatar_url} alt="" /> : <span>{c.user?.username?.slice(0,2).toUpperCase()}</span>}
+            </div>
+          </Link>
+          <Link to={`/perfil/${c.user?.id}`} className="comment-user">{c.user?.username}</Link>
           <span className="comment-text">{c.contenido}</span>
         </div>
       ))}

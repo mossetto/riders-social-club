@@ -1,6 +1,7 @@
 const router = require('express').Router()
 const { getClubs, getClub, createClub, updateClub, joinClub, updateMember, getMyClubes } = require('../controllers/clubsController')
-const { getClubEvents, createEvent, updateEvent, deleteEvent, getRoutes, addRoute, joinEvent, leaveEvent, getEventParticipants, getPublicEvents } = require('../controllers/eventsController')
+const { getClubEvents, createEvent, updateEvent, deleteEvent, getRoutes, addRoute, updateRoute, deleteRoute, joinEvent, leaveEvent, getEventParticipants, getPublicEvents } = require('../controllers/eventsController')
+const { getClubPosts } = require('../controllers/postsController')
 const { requireAuth, optionalAuth } = require('../middleware/auth')
 const { upload } = require('../utils/cloudinary')
 
@@ -19,7 +20,10 @@ router.delete('/:clubId/events/:eventId', requireAuth, deleteEvent)
 router.post('/:clubId/events/:eventId/join', requireAuth, joinEvent)
 router.delete('/:clubId/events/:eventId/join', requireAuth, leaveEvent)
 router.get('/:clubId/events/:eventId/participants', getEventParticipants)
+router.get('/:clubId/posts', getClubPosts)
 router.get('/:clubId/routes', getRoutes)
 router.post('/:clubId/routes', requireAuth, addRoute)
+router.put('/:clubId/routes/:routeId', requireAuth, updateRoute)
+router.delete('/:clubId/routes/:routeId', requireAuth, deleteRoute)
 
 module.exports = router

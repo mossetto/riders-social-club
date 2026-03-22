@@ -14,5 +14,8 @@ export const joinEvent = (clubId, eventId) => api.post(`/clubs/${clubId}/events/
 export const leaveEvent = (clubId, eventId) => api.delete(`/clubs/${clubId}/events/${eventId}/join`)
 export const getEventParticipants = (clubId, eventId) => api.get(`/clubs/${clubId}/events/${eventId}/participants`)
 export const getPublicEvents = () => api.get('/clubs/events/public')
+export const getClubPosts = (clubId) => api.get(`/clubs/${clubId}/posts`)
 export const getRoutes = (clubId) => api.get(`/clubs/${clubId}/routes`)
 export const addRoute = (clubId, data) => api.post(`/clubs/${clubId}/routes`, data)
+export const updateRoute = (clubId, routeId, data) => api.put(`/clubs/${clubId}/routes/${routeId}`, data)
+export const deleteRoute = (clubId, routeId) => api.delete(`/clubs/${clubId}/routes/${routeId}`)

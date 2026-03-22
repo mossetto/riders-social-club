@@ -82,7 +82,8 @@ button { cursor: pointer; font-family: inherit; }
 
 /* Comments */
 .comments { margin-top: 0.75rem; border-top: 0.5px solid var(--border); padding-top: 0.75rem; }
-.comment { display: flex; gap: 0.5rem; margin-bottom: 0.4rem; }
+.comment { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; }
+.comment-avatar { flex-shrink: 0; }
 .comment-user { font-weight: 600; font-size: 0.82rem; flex-shrink: 0; }
 .comment-text { font-size: 0.82rem; color: var(--text2); }
 .comment-form { display: flex; gap: 0.5rem; margin-top: 0.5rem; }

@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { getClub, joinClub, getClubEvents, getRoutes, createEvent, addRoute, joinEvent, leaveEvent, getEventParticipants, updateEvent, deleteEvent, updateMember } from '../api/clubs'
+import { getClub, joinClub, getClubEvents, getRoutes, createEvent, addRoute, updateRoute, deleteRoute, joinEvent, leaveEvent, getEventParticipants, updateEvent, deleteEvent, updateMember, getClubPosts } from '../api/clubs'
 import { useAuth } from '../context/AuthContext'
 import { getBandera } from '../components/PaisSelector'
 import PostCard, { LikesComments } from '../components/PostCard'
 import CreatePost from '../components/CreatePost'
-import { getFeed, deletePost } from '../api/posts'
+import { deletePost } from '../api/posts'
 
 function canDo(config, myRole) {
   if (!myRole) return false
@@ -44,6 +44,10 @@ export default function Club() {
   const [routeForm, setRouteForm] = useState({ nombre: '', descripcion: '', maps_url: '' })
   const [savingRoute, setSavingRoute] = useState(false)
 
+  // Editar ruta
+  const [editingRoute, setEditingRoute] = useState(null)
+  const [editRouteForm, setEditRouteForm] = useState({})
+
   useEffect(() => { loadAll() }, [id])
 
   async function loadAll() {
@@ -61,8 +65,8 @@ export default function Club() {
 
   async function loadPosts() {
     try {
-      const { data } = await getFeed()
-      setPosts(data.filter(p => p.club?.id === Number(id)))
+      const { data } = await getClubPosts(id)
+      setPosts(data)
     } catch {}
   }
 
@@ -141,6 +145,24 @@ export default function Club() {
     try {
       await deleteEvent(id, eventId)
       setEvents(ev => ev.filter(e => e.id !== eventId))
+    } catch {}
+  }
+
+  async function handleSaveEditRoute(e) {
+    e.preventDefault()
+    try {
+      await updateRoute(id, editingRoute, editRouteForm)
+      setEditingRoute(null)
+      const res = await getRoutes(id)
+      setRoutes(res.data)
+    } catch {}
+  }
+
+  async function handleDeleteRoute(routeId) {
+    if (!window.confirm('¿Eliminar esta ruta?')) return
+    try {
+      await deleteRoute(id, routeId)
+      setRoutes(r => r.filter(rt => rt.id !== routeId))
     } catch {}
   }
 
@@ -366,22 +388,45 @@ export default function Club() {
 
           {routes.length === 0 ? <p className="empty">No hay rutas guardadas</p> : routes.map(r => (
             <div key={r.id} className="route-card">
-              <div className="route-header">
-                <div style={{ flex: 1 }}>
-                  <h3>{r.nombre}</h3>
-                  {r.descripcion && <p style={{ fontSize: '0.85rem', color: 'var(--text2)', marginTop: '0.2rem' }}>{r.descripcion}</p>}
-                  {r.maps_url && <a href={r.maps_url} target="_blank" rel="noopener noreferrer" className="map-link" style={{ marginTop: '0.5rem', display: 'inline-block' }}>🗺️ Ver en Google Maps</a>}
-                </div>
-                {r.agregada_por && (
-                  <div className="route-autor">
-                    <div className="avatar-sm">
-                      {r.agregada_por.avatar_url ? <img src={r.agregada_por.avatar_url} alt="" /> : <span>{r.agregada_por.username?.slice(0,2).toUpperCase()}</span>}
-                    </div>
-                    <span className="route-autor-name">{r.agregada_por.username}</span>
+              {editingRoute === r.id ? (
+                <form onSubmit={handleSaveEditRoute} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <input className="input" value={editRouteForm.nombre} onChange={e => setEditRouteForm(f => ({ ...f, nombre: e.target.value }))} required />
+                  <textarea className="input" rows={2} placeholder="Descripción" value={editRouteForm.descripcion || ''} onChange={e => setEditRouteForm(f => ({ ...f, descripcion: e.target.value }))} />
+                  <textarea className="input" rows={2} placeholder="URL de Google Maps" value={editRouteForm.maps_url || ''} onChange={e => setEditRouteForm(f => ({ ...f, maps_url: e.target.value }))} />
+                  <div className="form-actions">
+                    <button type="submit" className="btn-primary">Guardar</button>
+                    <button type="button" className="btn-secondary" onClick={() => setEditingRoute(null)}>Cancelar</button>
+                    <button type="button" className="btn-danger" onClick={() => handleDeleteRoute(r.id)}>Eliminar</button>
                   </div>
-                )}
-              </div>
-              <LikesComments postId={r.post_id} likes={r.likes} comentarios={r.comentarios} />
+                </form>
+              ) : (
+                <>
+                  <div className="route-header">
+                    <div style={{ flex: 1 }}>
+                      <h3>{r.nombre}</h3>
+                      {r.descripcion && <p style={{ fontSize: '0.85rem', color: 'var(--text2)', marginTop: '0.2rem' }}>{r.descripcion}</p>}
+                      {r.maps_url && <a href={r.maps_url} target="_blank" rel="noopener noreferrer" className="map-link" style={{ marginTop: '0.5rem', display: 'inline-block' }}>🗺️ Ver en Google Maps</a>}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      {r.agregada_por && (
+                        <div className="route-autor">
+                          <div className="avatar-sm">
+                            {r.agregada_por.avatar_url ? <img src={r.agregada_por.avatar_url} alt="" /> : <span>{r.agregada_por.username?.slice(0,2).toUpperCase()}</span>}
+                          </div>
+                          <span className="route-autor-name">{r.agregada_por.username}</span>
+                        </div>
+                      )}
+                      {(canAddRoute || r.agregada_por?.id === user?.id) && (
+                        <button className="btn-icon" onClick={() => {
+                          setEditingRoute(r.id)
+                          setEditRouteForm({ nombre: r.nombre, descripcion: r.descripcion || '', maps_url: r.maps_url || '' })
+                        }}>✏️</button>
+                      )}
+                    </div>
+                  </div>
+                  <LikesComments postId={r.post_id} likes={r.likes} comentarios={r.comentarios} />
+                </>
+              )}
             </div>
           ))}
         </div>
