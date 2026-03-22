@@ -46,6 +46,9 @@ jobs:
           echo "Subiendo $CSS_NAME..."
           curl -s -T "assets/$CSS_NAME" "ftp://$FTP_HOST/assets/$CSS_NAME" -u "$FTP_USER:$FTP_PASS"
 
+          echo "Subiendo .htaccess..."
+          curl -s -T .htaccess "ftp://$FTP_HOST/.htaccess" -u "$FTP_USER:$FTP_PASS"
+
           echo "Verificando live..."
           sleep 5
           curl -s "https://chocolate-crane-120838.hostingersite.com/" | grep -o 'assets/[^"]*'
