@@ -235,7 +235,7 @@ export default function Club() {
                 {canPost && <CreatePost onCreated={loadPosts} clubId={id} />}
                 {posts.length === 0
                   ? <p className="empty">No hay publicaciones aún.</p>
-                  : posts.map(p => <PostCard key={p.id} post={p} onDelete={async (pid) => { await deletePost(pid); loadPosts() }} />)}
+                  : posts.map(p => <PostCard key={p.id} post={p} showRol onDelete={async (pid) => { await deletePost(pid); loadPosts() }} />)}
               </>
           }
         </div>

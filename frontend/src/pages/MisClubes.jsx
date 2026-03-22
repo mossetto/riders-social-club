@@ -67,7 +67,7 @@ export default function MisClubes() {
 
       {posts.length === 0
         ? <p className="empty">No hay publicaciones en tus clubes aún.</p>
-        : posts.map(p => <PostCard key={p.id} post={p} onDelete={handleDelete} />)
+        : posts.map(p => <PostCard key={p.id} post={p} showRol onDelete={handleDelete} />)
       }
     </div>
   )

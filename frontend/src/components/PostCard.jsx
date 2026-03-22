@@ -5,7 +5,7 @@ import { toggleLike } from '../api/posts'
 import { useAuth } from '../context/AuthContext'
 import { timeAgo } from '../utils/timeAgo'
 
-export default function PostCard({ post, onDelete }) {
+export default function PostCard({ post, onDelete, showRol = false }) {
   const { user } = useAuth()
   const [likes, setLikes] = useState(Number(post.likes))
   const [liked, setLiked] = useState(false)
@@ -30,7 +30,7 @@ export default function PostCard({ post, onDelete }) {
           <Link to={`/perfil/${post.user.id}`} className="post-username">{post.user.username}</Link>
           {post.club && (
             <Link to={`/club/${post.club.id}`} className="club-tag">
-              {post.club.nombre} · {post.club.rol}
+              {post.club.nombre}{showRol && post.club.rol ? ` · ${post.club.rol}` : ''}
             </Link>
           )}
         </div>
