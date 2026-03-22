@@ -68,7 +68,7 @@ async function createEvent(req, res) {
 
 async function updateEvent(req, res) {
   const { clubId, eventId } = req.params
-  const { titulo, descripcion, fecha_salida, punto_encuentro, destino } = req.body
+  const { titulo, descripcion, fecha_salida, punto_encuentro, destino, es_publico } = req.body
   try {
     const member = await pool.query(
       `SELECT rol FROM club_members WHERE club_id = $1 AND user_id = $2 AND estado = 'activo'`,
@@ -77,8 +77,8 @@ async function updateEvent(req, res) {
       return res.status(403).json({ error: 'Sin permisos' })
     }
     await pool.query(
-      `UPDATE events SET titulo=$1, descripcion=$2, fecha_salida=$3, punto_encuentro=$4, destino=$5 WHERE id=$6 AND club_id=$7`,
-      [titulo, descripcion, fecha_salida, punto_encuentro, destino, eventId, clubId])
+      `UPDATE events SET titulo=$1, descripcion=$2, fecha_salida=$3, punto_encuentro=$4, destino=$5, es_publico=$6 WHERE id=$7 AND club_id=$8`,
+      [titulo, descripcion, fecha_salida, punto_encuentro, destino, es_publico === 'true' || es_publico === true, eventId, clubId])
     res.json({ message: 'Evento actualizado' })
   } catch (err) {
     console.error(err)

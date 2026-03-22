@@ -7,14 +7,12 @@ import { useAuth } from '../context/AuthContext'
 import api from '../api/axiosInstance'
 import { getBandera } from '../components/PaisSelector'
 
-const PROVINCIAS = ['Buenos Aires','CABA','Córdoba','Santa Fe','Mendoza','Tucumán','Salta','Neuquén','Río Negro','Chubut','Santa Cruz','Tierra del Fuego','Entre Ríos','Corrientes','Misiones','Chaco','Formosa','Santiago del Estero','La Rioja','Catamarca','San Juan','San Luis','La Pampa','Jujuy']
-
 export default function Explorar() {
   const { user } = useAuth()
   const [tab, setTab] = useState('clubes')
 
   // Tab Clubes
-  const [clubs, setClubs] = useState([])
+  const [allClubs, setAllClubs] = useState([])
   const [misClubIds, setMisClubIds] = useState([])
   const [provincia, setProvincia] = useState('')
   const [loadingClubes, setLoadingClubes] = useState(true)
@@ -36,15 +34,15 @@ export default function Explorar() {
   useEffect(() => {
     if (tab === 'clubes') loadClubes()
     if (tab === 'eventos') loadEventos()
-  }, [tab, provincia])
+  }, [tab])
 
   async function loadClubes() {
     setLoadingClubes(true)
     try {
-      const promises = [getClubs(provincia)]
+      const promises = [getClubs()]
       if (user) promises.push(api.get('/clubs/mine'))
       const results = await Promise.all(promises)
-      setClubs(results[0].data)
+      setAllClubs(results[0].data)
       if (user) setMisClubIds(results[1].data.map(c => c.id))
     } catch {}
     setLoadingClubes(false)
@@ -96,23 +94,41 @@ export default function Explorar() {
         <button className={tab === 'eventos' ? 'tab active' : 'tab'} onClick={() => setTab('eventos')}>Eventos</button>
       </div>
 
-      {tab === 'clubes' && (
-        <>
-          <div className="filter-row">
-            <button className={!provincia ? 'filter-pill on' : 'filter-pill'} onClick={() => setProvincia('')}>Todos</button>
-            {PROVINCIAS.map(p => (
-              <button key={p} className={provincia === p ? 'filter-pill on' : 'filter-pill'} onClick={() => setProvincia(p)}>{p}</button>
-            ))}
-          </div>
-          {loadingClubes ? <div className="loading">Cargando...</div> : (
-            clubs.length === 0
-              ? <p className="empty">No hay clubes todavía</p>
-              : clubs.map(c => (
-                  <ClubCard key={c.id} club={c} isMember={misClubIds.includes(c.id)} onJoin={loadClubes} />
-                ))
-          )}
-        </>
-      )}
+      {tab === 'clubes' && (() => {
+        const provinciasConClubes = Object.entries(
+          allClubs.reduce((acc, c) => {
+            const key = c.provincia || ''
+            if (key) acc[key] = (acc[key] || 0) + 1
+            return acc
+          }, {})
+        ).sort((a, b) => b[1] - a[1])
+
+        const clubsFiltrados = provincia
+          ? allClubs.filter(c => c.provincia === provincia)
+          : allClubs
+
+        return (
+          <>
+            {provinciasConClubes.length > 0 && (
+              <div className="filter-row">
+                <button className={!provincia ? 'filter-pill on' : 'filter-pill'} onClick={() => setProvincia('')}>Todos ({allClubs.length})</button>
+                {provinciasConClubes.map(([p, count]) => (
+                  <button key={p} className={provincia === p ? 'filter-pill on' : 'filter-pill'} onClick={() => setProvincia(p)}>
+                    {p} ({count})
+                  </button>
+                ))}
+              </div>
+            )}
+            {loadingClubes ? <div className="loading">Cargando...</div> : (
+              clubsFiltrados.length === 0
+                ? <p className="empty">No hay clubes todavía</p>
+                : clubsFiltrados.map(c => (
+                    <ClubCard key={c.id} club={c} isMember={misClubIds.includes(c.id)} onJoin={loadClubes} />
+                  ))
+            )}
+          </>
+        )
+      })()}
 
       {tab === 'miembros' && (
         <>

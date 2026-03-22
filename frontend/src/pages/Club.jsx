@@ -34,6 +34,7 @@ export default function Club() {
   // Editar evento
   const [editingEvent, setEditingEvent] = useState(null)
   const [editEventForm, setEditEventForm] = useState({})
+  const [editEventPublico, setEditEventPublico] = useState(false)
 
   // Participantes
   const [expandedParticipants, setExpandedParticipants] = useState(null)
@@ -133,7 +134,7 @@ export default function Club() {
   async function handleSaveEditEvent(e) {
     e.preventDefault()
     try {
-      await updateEvent(id, editingEvent, editEventForm)
+      await updateEvent(id, editingEvent, { ...editEventForm, es_publico: editEventPublico })
       setEditingEvent(null)
       const res = await getClubEvents(id)
       setEvents(res.data)
@@ -287,6 +288,10 @@ export default function Club() {
                   <textarea className="input" rows={2} value={editEventForm.descripcion || ''} onChange={e => setEditEventForm(f => ({ ...f, descripcion: e.target.value }))} />
                   <input className="input" placeholder="Punto de encuentro" value={editEventForm.punto_encuentro || ''} onChange={e => setEditEventForm(f => ({ ...f, punto_encuentro: e.target.value }))} />
                   <input className="input" placeholder="Destino" value={editEventForm.destino || ''} onChange={e => setEditEventForm(f => ({ ...f, destino: e.target.value }))} />
+                  <label className="vis-option">
+                    <input type="checkbox" checked={editEventPublico} onChange={e => setEditEventPublico(e.target.checked)} />
+                    Evento público (visible en el explorador)
+                  </label>
                   <div className="form-actions">
                     <button type="submit" className="btn-primary">Guardar</button>
                     <button type="button" className="btn-secondary" onClick={() => setEditingEvent(null)}>Cancelar</button>
@@ -332,6 +337,7 @@ export default function Club() {
                         const d = new Date(ev.fecha_salida)
                         const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
                         setEditEventForm({ titulo: ev.titulo, descripcion: ev.descripcion || '', fecha_salida: local, punto_encuentro: ev.punto_encuentro || '', destino: ev.destino || '' })
+                        setEditEventPublico(!!ev.es_publico)
                       }}>✏️</button>
                     )}
                   </div>
