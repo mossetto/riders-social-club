@@ -5,7 +5,7 @@ import { toggleLike } from '../api/posts'
 import { useAuth } from '../context/AuthContext'
 import { timeAgo } from '../utils/timeAgo'
 
-export default function PostCard({ post, onDelete, showRol = false }) {
+export default function PostCard({ post, onDelete, showRol = false, hideClubIcon = false }) {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [likes, setLikes] = useState(Number(post.likes))
@@ -36,7 +36,7 @@ export default function PostCard({ post, onDelete, showRol = false }) {
           )}
         </div>
         <span className="post-time">{timeAgo(post.created_at)}</span>
-        {post.club && (
+        {post.club && !hideClubIcon && (
           <Link to={`/club/${post.club.id}`} className="post-club-escudo">
             {post.club.escudo_url
               ? <img src={post.club.escudo_url} alt={post.club.nombre} />

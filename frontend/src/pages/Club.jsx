@@ -80,7 +80,16 @@ export default function Club() {
     const el = document.getElementById(`item-${highlightId}`)
     if (el && !didScrollRef.current) {
       didScrollRef.current = true
-      setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 150)
+      setTimeout(() => {
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+        setTimeout(() => {
+          setSearchParams(prev => {
+            const next = new URLSearchParams(prev)
+            next.delete('highlight')
+            return next
+          }, { replace: true })
+        }, 1500)
+      }, 150)
     }
   }, [tab, events, routes, highlightId])
 
@@ -275,7 +284,7 @@ export default function Club() {
                 {canPost && <CreatePost onCreated={loadPosts} clubId={id} events={events} routes={routes} />}
                 {posts.length === 0
                   ? <p className="empty">No hay publicaciones aún.</p>
-                  : posts.map(p => <PostCard key={p.id} post={p} showRol onDelete={async (pid) => { await deletePost(pid); loadPosts() }} />)}
+                  : posts.map(p => <PostCard key={p.id} post={p} showRol hideClubIcon onDelete={async (pid) => { await deletePost(pid); loadPosts() }} />)}
               </>
           }
         </div>
@@ -382,6 +391,10 @@ export default function Club() {
                         const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
                         setEditEventForm({ titulo: ev.titulo, descripcion: ev.descripcion || '', fecha_salida: local, punto_encuentro: ev.punto_encuentro || '', destino: ev.destino || '' })
                         setEditEventPublico(!!ev.es_publico)
+                        setTimeout(() => {
+                          const el = document.getElementById(`item-${ev.id}`)
+                          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                        }, 50)
                       }}>✏️</button>
                     )}
                   </div>
@@ -470,6 +483,10 @@ export default function Club() {
                         <button className="btn-icon" onClick={() => {
                           setEditingRoute(r.id)
                           setEditRouteForm({ nombre: r.nombre, descripcion: r.descripcion || '', maps_url: r.maps_url || '' })
+                          setTimeout(() => {
+                            const el = document.getElementById(`item-${r.id}`)
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                          }, 50)
                         }}>✏️</button>
                       )}
                     </div>
