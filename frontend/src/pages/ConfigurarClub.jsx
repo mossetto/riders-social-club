@@ -25,6 +25,43 @@ function ConfigRadio({ label, name, value, onChange }) {
   )
 }
 
+function ImageField({ label, fieldName, currentUrl }) {
+  const [mode, setMode] = useState('idle') // 'idle' | 'replace'
+  const [clear, setClear] = useState(false)
+
+  const hasImage = currentUrl && !clear
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+      <span className="input-label">{label}</span>
+      {hasImage && mode !== 'replace' ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <img src={currentUrl} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover', border: '0.5px solid var(--border)' }} />
+          <button type="button" className="btn-secondary" style={{ fontSize: '0.78rem' }} onClick={() => setMode('replace')}>
+            Reemplazar imagen
+          </button>
+          <button type="button" className="btn-danger" style={{ fontSize: '0.78rem' }} onClick={() => { setClear(true); setMode('idle') }}>
+            Eliminar imagen
+          </button>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'var(--bg3)', border: '0.5px solid var(--border)', borderRadius: 7, padding: '0.4rem 0.75rem', fontSize: '0.82rem', cursor: 'pointer' }}>
+            📎 Elegir archivo
+            <input type="file" name={fieldName} accept="image/*" hidden />
+          </label>
+          {hasImage === false && mode === 'replace' && (
+            <button type="button" className="btn-secondary" style={{ fontSize: '0.78rem' }} onClick={() => setMode('idle')}>
+              Cancelar
+            </button>
+          )}
+        </div>
+      )}
+      {clear && <input type="hidden" name={`${fieldName}_clear`} value="true" />}
+    </div>
+  )
+}
+
 export default function ConfigurarClub() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -80,22 +117,28 @@ export default function ConfigurarClub() {
     <div className="page">
       <h2 className="page-title">Configurar club</h2>
       <form className="edit-form" onSubmit={handleSubmit} encType="multipart/form-data">
-        <h3 style={{ fontSize: '0.9rem', color: 'var(--text2)', marginBottom: '0.25rem' }}>Información general</h3>
-        <label className="input-label">Nombre del club *</label>
+        <h3 style={{ fontSize: '0.9rem', color: 'var(--text2)', marginBottom: '0.25rem', textAlign: 'left' }}>Información general</h3>
+
+        <label className="input-label" style={{ textAlign: 'left' }}>Nombre del club *</label>
         <input name="nombre" defaultValue={club?.nombre} placeholder="Nombre del club" required />
-        <label className="input-label">Slogan</label>
+
+        <label className="input-label" style={{ textAlign: 'left' }}>Slogan</label>
         <input name="slogan" defaultValue={club?.slogan} placeholder="Slogan (Opcional)" />
-        <label className="input-label">País</label>
+
+        <label className="input-label" style={{ textAlign: 'left' }}>País</label>
         <PaisSelector value={pais} onChange={setPais} placeholder="País (Opcional)" />
-        <label className="input-label">Provincia / Estado / Ciudad</label>
+
+        <label className="input-label" style={{ textAlign: 'left' }}>Provincia / Estado / Ciudad</label>
         <input name="provincia" defaultValue={club?.provincia} placeholder="Provincia / Estado / Ciudad (Opcional)" />
-        <label className="input-label">Tipo de club</label>
+
+        <label className="input-label" style={{ textAlign: 'left' }}>Tipo de club</label>
         <select name="tipo" defaultValue={club?.tipo || 'publico'}>
           <option value="publico">Público</option>
           <option value="privado">Privado</option>
         </select>
-        <label className="file-label">Escudo / estandarte <input type="file" name="escudo" accept="image/*" /></label>
-        <label className="file-label">Foto de portada <input type="file" name="portada" accept="image/*" /></label>
+
+        <ImageField label="Escudo / estandarte" fieldName="escudo" currentUrl={club?.escudo_url} />
+        <ImageField label="Foto de portada" fieldName="portada" currentUrl={club?.portada_url} />
 
         <button
           type="button"

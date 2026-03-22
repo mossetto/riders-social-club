@@ -107,7 +107,9 @@ async function updateClub(req, res) {
     if (config_ingreso) { fields.push(`config_ingreso = $${i++}`); values.push(config_ingreso) }
     if (config_roles) { fields.push(`config_roles = $${i++}`); values.push(config_roles) }
     if (escudo_url) { fields.push(`escudo_url = $${i++}`); values.push(escudo_url) }
+    else if (req.body.escudo_clear === 'true') { fields.push(`escudo_url = $${i++}`); values.push(null) }
     if (portada_url) { fields.push(`portada_url = $${i++}`); values.push(portada_url) }
+    else if (req.body.portada_clear === 'true') { fields.push(`portada_url = $${i++}`); values.push(null) }
     if (!fields.length) return res.status(400).json({ error: 'Nada para actualizar' })
     values.push(id)
     const result = await pool.query(
