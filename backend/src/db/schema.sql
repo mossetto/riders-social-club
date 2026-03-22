@@ -146,6 +146,12 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='events' AND column_name='es_publico') THEN
     ALTER TABLE events ADD COLUMN es_publico BOOLEAN DEFAULT false;
   END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='events' AND column_name='post_id') THEN
+    ALTER TABLE events ADD COLUMN post_id INTEGER REFERENCES posts(id) ON DELETE SET NULL;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='routes' AND column_name='post_id') THEN
+    ALTER TABLE routes ADD COLUMN post_id INTEGER REFERENCES posts(id) ON DELETE SET NULL;
+  END IF;
 END $$;
 
 CREATE TABLE IF NOT EXISTS password_reset_tokens (

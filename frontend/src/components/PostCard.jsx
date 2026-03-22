@@ -24,7 +24,7 @@ export default function PostCard({ post, onDelete }) {
     <div className="post-card">
       <div className="post-header">
         <Link to={`/perfil/${post.user.id}`}>
-          <BurbujaRider user={post.user} moto={post.moto} />
+          <BurbujaRider user={post.user} moto={post.moto} size={40} />
         </Link>
         <div className="post-meta">
           <Link to={`/perfil/${post.user.id}`} className="post-username">{post.user.username}</Link>
@@ -63,6 +63,35 @@ export default function PostCard({ post, onDelete }) {
 
       {showComments && <CommentsSection postId={post.id} />}
     </div>
+  )
+}
+
+export function LikesComments({ postId, likes: initLikes, comentarios: initComentarios }) {
+  const { user } = useAuth()
+  const [likes, setLikes] = useState(Number(initLikes || 0))
+  const [liked, setLiked] = useState(false)
+  const [showComments, setShowComments] = useState(false)
+
+  async function handleLike() {
+    if (!user || !postId) return
+    try {
+      const { toggleLike } = await import('../api/posts')
+      const { data } = await toggleLike(postId)
+      setLiked(data.liked)
+      setLikes(l => data.liked ? l + 1 : l - 1)
+    } catch {}
+  }
+
+  if (!postId) return null
+
+  return (
+    <>
+      <div className="post-actions" style={{ marginTop: '0.75rem' }}>
+        <button className={`action-btn ${liked ? 'liked' : ''}`} onClick={handleLike}>♥ {likes}</button>
+        <button className="action-btn" onClick={() => setShowComments(!showComments)}>💬 {initComentarios || 0}</button>
+      </div>
+      {showComments && <CommentsSection postId={postId} />}
+    </>
   )
 }
 

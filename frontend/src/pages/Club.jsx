@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { getClub, joinClub, getClubEvents, getRoutes, createEvent, addRoute, joinEvent, leaveEvent, getEventParticipants, updateEvent, deleteEvent, updateMember } from '../api/clubs'
 import { useAuth } from '../context/AuthContext'
 import { getBandera } from '../components/PaisSelector'
-import PostCard from '../components/PostCard'
+import PostCard, { LikesComments } from '../components/PostCard'
 import CreatePost from '../components/CreatePost'
 import { getFeed, deletePost } from '../api/posts'
 
@@ -162,32 +162,40 @@ export default function Club() {
 
   return (
     <div className="page">
-      {club.portada_url && (
-        <div className="club-portada">
-          <img src={club.portada_url} alt="portada" />
-        </div>
-      )}
-      <div className="club-header">
-        <div className="club-escudo-lg">
-          {club.escudo_url ? <img src={club.escudo_url} alt={club.nombre} /> : <span>{club.nombre.slice(0,2).toUpperCase()}</span>}
-        </div>
-        <div style={{ flex: 1 }}>
-          <h1>{club.nombre}</h1>
-          {club.slogan && <p className="club-slogan">{club.slogan}</p>}
-          <p className="club-meta">
-            {club.miembros} miembros
-            {club.provincia && ` · ${club.provincia}`}
-            {club.pais && ` · ${getBandera(club.pais)} ${club.pais}`}
-            {` · ${club.tipo}`}
-          </p>
-          {myRole && <span className="role-badge">{myRole}</span>}
-          {!joined && user && <button className="btn-primary" style={{ marginTop: '0.5rem' }} onClick={handleJoin}>Solicitar ingreso</button>}
-        </div>
-        {isFundador && (
-          <button className="btn-secondary" style={{ flexShrink: 0 }} onClick={() => navigate(`/club/${id}/configurar`)}>
-            ⚙️ Configurar club
-          </button>
+      <div className="club-header-card">
+        {club.portada_url && (
+          <div className="club-portada-inner">
+            <img src={club.portada_url} alt="portada" />
+          </div>
         )}
+        <div className="club-header-body">
+          <div className="club-escudo-lg">
+            {club.escudo_url ? <img src={club.escudo_url} alt={club.nombre} /> : <span>{club.nombre.slice(0,2).toUpperCase()}</span>}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
+              <div style={{ minWidth: 0 }}>
+                <h1 className="club-header-nombre">{club.nombre}</h1>
+                <p className="club-meta">
+                  {club.miembros} miembros
+                  {club.provincia && ` · ${club.provincia}`}
+                  {club.pais && ` · ${getBandera(club.pais)} ${club.pais}`}
+                  {` · ${club.tipo}`}
+                </p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.4rem', flexShrink: 0 }}>
+                {myRole && <span className="role-badge">{myRole}</span>}
+                {isFundador && (
+                  <button className="btn-secondary" style={{ fontSize: '0.78rem', padding: '0.3rem 0.65rem', whiteSpace: 'nowrap' }} onClick={() => navigate(`/club/${id}/configurar`)}>
+                    ⚙️ Configurar club
+                  </button>
+                )}
+              </div>
+            </div>
+            {club.slogan && <p className="club-slogan" style={{ marginTop: '0.4rem' }}>{club.slogan}</p>}
+            {!joined && user && <button className="btn-primary" style={{ marginTop: '0.6rem', fontSize: '0.85rem' }} onClick={handleJoin}>Solicitar ingreso</button>}
+          </div>
+        </div>
       </div>
 
       <div className="tabs">
@@ -279,12 +287,12 @@ export default function Club() {
                       </div>
                     )}
                   </div>
-                  {ev.punto_encuentro && <p style={{ fontSize: '0.85rem', marginBottom: '0.3rem' }}>📍 {ev.punto_encuentro}{ev.destino ? ` → ${ev.destino}` : ''}</p>}
-                  {ev.descripcion && <p style={{ fontSize: '0.85rem', color: 'var(--text2)', marginBottom: '0.4rem' }}>{ev.descripcion}</p>}
+                  {ev.punto_encuentro && <p className="event-location">📍 {ev.punto_encuentro}{ev.destino ? ` → ${ev.destino}` : ''}</p>}
+                  {ev.descripcion && <p className="event-desc">{ev.descripcion}</p>}
                   {ev.ruta && <a href={ev.ruta.maps_url} target="_blank" rel="noopener noreferrer" className="map-link">🗺️ Ver ruta: {ev.ruta.nombre}</a>}
                   {!ev.ruta && ev.ruta_url && <a href={ev.ruta_url} target="_blank" rel="noopener noreferrer" className="map-link">🗺️ Ver ruta en Google Maps</a>}
 
-                  <div className="event-actions">
+                  <div className="event-actions" style={{ marginTop: '0.6rem' }}>
                     {user && (
                       <button
                         className={ev.yo_participo ? 'btn-secondary' : 'btn-primary-sm'}
@@ -305,6 +313,8 @@ export default function Club() {
                       }}>✏️</button>
                     )}
                   </div>
+
+                  <LikesComments postId={ev.post_id} likes={ev.likes} comentarios={ev.comentarios} />
 
                   {expandedParticipants === ev.id && (
                     <div className="event-participants">
@@ -357,7 +367,7 @@ export default function Club() {
           {routes.length === 0 ? <p className="empty">No hay rutas guardadas</p> : routes.map(r => (
             <div key={r.id} className="route-card">
               <div className="route-header">
-                <div>
+                <div style={{ flex: 1 }}>
                   <h3>{r.nombre}</h3>
                   {r.descripcion && <p style={{ fontSize: '0.85rem', color: 'var(--text2)', marginTop: '0.2rem' }}>{r.descripcion}</p>}
                   {r.maps_url && <a href={r.maps_url} target="_blank" rel="noopener noreferrer" className="map-link" style={{ marginTop: '0.5rem', display: 'inline-block' }}>🗺️ Ver en Google Maps</a>}
@@ -371,6 +381,7 @@ export default function Club() {
                   </div>
                 )}
               </div>
+              <LikesComments postId={r.post_id} likes={r.likes} comentarios={r.comentarios} />
             </div>
           ))}
         </div>

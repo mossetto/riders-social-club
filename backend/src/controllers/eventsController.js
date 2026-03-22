@@ -11,8 +11,10 @@ async function getClubEvents(req, res) {
           THEN json_build_object('id', r.id, 'nombre', r.nombre, 'maps_url', r.maps_url)
           ELSE NULL
         END as ruta,
-        COUNT(ep.id) as participantes_count,
-        BOOL_OR(ep.user_id = $2) as yo_participo
+        COUNT(DISTINCT ep.id) as participantes_count,
+        BOOL_OR(ep.user_id = $2) as yo_participo,
+        (SELECT COUNT(*) FROM likes WHERE post_id = e.post_id) as likes,
+        (SELECT COUNT(*) FROM comments WHERE post_id = e.post_id) as comentarios
        FROM events e
        LEFT JOIN users u ON u.id = e.user_id
        LEFT JOIN routes r ON r.id = e.ruta_id
@@ -52,10 +54,11 @@ async function createEvent(req, res) {
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
       [clubId, req.user.id, titulo, descripcion, fecha_salida, punto_encuentro, destino, paradas, finalRutaUrl, ruta_id || null, es_publico === 'true' || es_publico === true])
     const fechaFmt = new Date(fecha_salida).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
-    await pool.query(
-      `INSERT INTO posts (user_id, club_id, tipo, contenido) VALUES ($1, $2, 'club', $3)`,
+    const post = await pool.query(
+      `INSERT INTO posts (user_id, club_id, tipo, contenido) VALUES ($1, $2, 'club', $3) RETURNING id`,
       [req.user.id, clubId, `📅 Nueva salida: **${titulo}** — ${fechaFmt}${punto_encuentro ? ` · Salida desde ${punto_encuentro}` : ''}${destino ? ` → ${destino}` : ''}`]
     )
+    await pool.query('UPDATE events SET post_id = $1 WHERE id = $2', [post.rows[0].id, result.rows[0].id])
     res.status(201).json(result.rows[0])
   } catch (err) {
     console.error(err)
@@ -167,7 +170,10 @@ async function getPublicEvents(req, res) {
 async function getRoutes(req, res) {
   try {
     const result = await pool.query(
-      `SELECT r.*, json_build_object('id', u.id, 'username', u.username, 'avatar_url', u.avatar_url) as agregada_por
+      `SELECT r.*,
+        json_build_object('id', u.id, 'username', u.username, 'avatar_url', u.avatar_url) as agregada_por,
+        (SELECT COUNT(*) FROM likes WHERE post_id = r.post_id) as likes,
+        (SELECT COUNT(*) FROM comments WHERE post_id = r.post_id) as comentarios
        FROM routes r
        LEFT JOIN users u ON u.id = r.user_id
        WHERE r.club_id = $1 ORDER BY r.created_at DESC`,
@@ -197,10 +203,11 @@ async function addRoute(req, res) {
     const result = await pool.query(
       'INSERT INTO routes (club_id, user_id, nombre, descripcion, maps_url) VALUES ($1,$2,$3,$4,$5) RETURNING *',
       [clubId, req.user.id, nombre, descripcion, maps_url])
-    await pool.query(
-      `INSERT INTO posts (user_id, club_id, tipo, contenido) VALUES ($1, $2, 'club', $3)`,
+    const post = await pool.query(
+      `INSERT INTO posts (user_id, club_id, tipo, contenido) VALUES ($1, $2, 'club', $3) RETURNING id`,
       [req.user.id, clubId, `🗺️ Nueva ruta guardada: **${nombre}**${descripcion ? ` — ${descripcion}` : ''}`]
     )
+    await pool.query('UPDATE routes SET post_id = $1 WHERE id = $2', [post.rows[0].id, result.rows[0].id])
     res.status(201).json(result.rows[0])
   } catch (err) {
     console.error(err)
