@@ -34,22 +34,19 @@ jobs:
           FTP_PASS: ${{ secrets.FTP_PASS }}
         run: |
           cd frontend/dist
-          JS_FILE=$(ls assets/*.js)
-          CSS_FILE=$(ls assets/*.css)
-          JS_NAME=$(basename $JS_FILE)
-          CSS_NAME=$(basename $CSS_FILE)
 
           echo "Subiendo index.html..."
           curl -s -T index.html "ftp://$FTP_HOST/index.html" -u "$FTP_USER:$FTP_PASS"
 
-          echo "Subiendo $JS_NAME..."
-          curl -s -T "assets/$JS_NAME" "ftp://$FTP_HOST/assets/$JS_NAME" -u "$FTP_USER:$FTP_PASS"
-
-          echo "Subiendo $CSS_NAME..."
-          curl -s -T "assets/$CSS_NAME" "ftp://$FTP_HOST/assets/$CSS_NAME" -u "$FTP_USER:$FTP_PASS"
-
           echo "Subiendo .htaccess..."
           curl -s -T .htaccess "ftp://$FTP_HOST/.htaccess" -u "$FTP_USER:$FTP_PASS"
+
+          echo "Subiendo todos los assets..."
+          for file in assets/*; do
+            NAME=$(basename "$file")
+            echo "  → $NAME"
+            curl -s -T "$file" "ftp://$FTP_HOST/assets/$NAME" -u "$FTP_USER:$FTP_PASS"
+          done
 
           echo "Verificando live..."
           sleep 5
