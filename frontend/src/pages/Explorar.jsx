@@ -247,6 +247,14 @@ function PublicEventCard({ event: ev, onUpdate }) {
     setLoading(false)
   }
 
+  const diasRestantes = (() => {
+    const hoy = new Date(); hoy.setHours(0,0,0,0)
+    const fecha = new Date(ev.fecha_salida); fecha.setHours(0,0,0,0)
+    return Math.ceil((fecha - hoy) / (1000 * 60 * 60 * 24))
+  })()
+  const etiquetaDias = diasRestantes === 0 ? '¡Es hoy!' : diasRestantes === 1 ? 'Es mañana' : `En ${diasRestantes} días`
+  const colorDias = diasRestantes === 0 ? '#e74c3c' : diasRestantes <= 3 ? '#e67e22' : 'var(--text3)'
+
   return (
     <div className="event-card" style={{ textDecoration: 'none' }}>
       <Link to={`/club/${ev.club?.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
@@ -254,6 +262,7 @@ function PublicEventCard({ event: ev, onUpdate }) {
           <div style={{ flex: 1 }}>
             <h3 style={{ fontSize: '0.95rem', fontWeight: 600 }}>{ev.titulo}</h3>
             <p className="event-date">{new Date(ev.fecha_salida).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</p>
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: colorDias }}>{etiquetaDias}</span>
           </div>
           {ev.club && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>

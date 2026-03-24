@@ -163,11 +163,9 @@ async function getMyClubsEvents(req, res) {
        JOIN club_members cm ON cm.club_id = e.club_id AND cm.user_id = $1 AND cm.estado = 'activo'
        LEFT JOIN users u ON u.id = e.user_id
        LEFT JOIN event_participants ep ON ep.event_id = e.id
+       WHERE e.fecha_salida >= NOW()
        GROUP BY e.id, u.id, c.id
-       ORDER BY
-         CASE WHEN e.fecha_salida >= NOW() THEN 0 ELSE 1 END ASC,
-         CASE WHEN e.fecha_salida >= NOW() THEN e.fecha_salida END ASC,
-         CASE WHEN e.fecha_salida < NOW() THEN e.fecha_salida END DESC`,
+       ORDER BY e.fecha_salida ASC`,
       [userId])
     res.json(result.rows)
   } catch (err) {
@@ -189,9 +187,9 @@ async function getPublicEvents(req, res) {
        JOIN clubs c ON c.id = e.club_id
        LEFT JOIN users u ON u.id = e.user_id
        LEFT JOIN event_participants ep ON ep.event_id = e.id
-       WHERE e.es_publico = true
+       WHERE e.es_publico = true AND e.fecha_salida >= NOW()
        GROUP BY e.id, u.id, c.id
-       ORDER BY e.fecha_salida DESC LIMIT 50`,
+       ORDER BY e.fecha_salida ASC LIMIT 50`,
       [userId])
     res.json(result.rows)
   } catch (err) {
