@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import introVideo from '../assets/introBikers.mp4'
+import logoSvg from '../assets/logo.svg'
 
 const VIDEO_DURATION = 5
 const DISPLAY_MS = 4000
@@ -9,32 +10,18 @@ export default function IntroScreen({ onDone }) {
   const [fading, setFading] = useState(false)
   const videoRef = useRef(null)
 
-  console.log('[INTRO] Component mounted, video import =', introVideo)
-
   useEffect(() => {
-    console.log('[INTRO] useEffect running, DISPLAY_MS =', DISPLAY_MS)
-    const fadeTimer = setTimeout(() => {
-      console.log('[INTRO] Starting fade')
-      setFading(true)
-    }, DISPLAY_MS)
-    const doneTimer = setTimeout(() => {
-      console.log('[INTRO] Done, transitioning out')
-      onDone()
-    }, DISPLAY_MS + FADE_MS)
+    const fadeTimer = setTimeout(() => setFading(true), DISPLAY_MS)
+    const doneTimer = setTimeout(() => onDone(), DISPLAY_MS + FADE_MS)
     return () => { clearTimeout(fadeTimer); clearTimeout(doneTimer) }
   }, [])
 
   function handleLoadedMetadata() {
     const video = videoRef.current
-    if (!video) { console.log('[INTRO] video ref is null'); return }
-    console.log('[INTRO] Video loaded — duration:', video.duration, 'readyState:', video.readyState)
+    if (!video) return
     const maxStart = VIDEO_DURATION - DISPLAY_MS / 1000
     video.currentTime = Math.random() * Math.max(0, maxStart)
-    video.play().then(() => console.log('[INTRO] Video playing')).catch(e => console.log('[INTRO] Video play error:', e))
-  }
-
-  function handleVideoError(e) {
-    console.error('[INTRO] Video error:', e.target.error)
+    video.play().catch(() => {})
   }
 
   return (
@@ -48,17 +35,11 @@ export default function IntroScreen({ onDone }) {
         preload="auto"
         loop
         onLoadedMetadata={handleLoadedMetadata}
-        onError={handleVideoError}
         className="intro-video"
       />
       <div className="intro-overlay" />
       <div className="intro-logo">
-        <img
-          src="/favicon.svg"
-          alt="Riders Social Club"
-          onLoad={() => console.log('[INTRO] Logo loaded OK')}
-          onError={(e) => console.error('[INTRO] Logo FAILED to load, src:', e.target.src)}
-        />
+        <img src={logoSvg} alt="Riders Social Club" />
         <span className="intro-brand">Riders Social Club</span>
       </div>
     </div>
