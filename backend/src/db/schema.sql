@@ -220,6 +220,20 @@ BEGIN
   END LOOP;
 END $$;
 
+-- Geolocation para riders cerca
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='lat') THEN
+    ALTER TABLE users ADD COLUMN lat DOUBLE PRECISION;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='lng') THEN
+    ALTER TABLE users ADD COLUMN lng DOUBLE PRECISION;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='location_updated_at') THEN
+    ALTER TABLE users ADD COLUMN location_updated_at TIMESTAMP;
+  END IF;
+END $$;
+
 -- Índices para performance
 CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id);
 CREATE INDEX IF NOT EXISTS idx_posts_club_id ON posts(club_id);

@@ -1,5 +1,5 @@
 const router = require('express').Router()
-const { getClubs, getClub, createClub, updateClub, joinClub, leaveClub, updateMember, getMyClubes } = require('../controllers/clubsController')
+const { getClubs, getClub, createClub, updateClub, joinClub, leaveClub, updateMember, getMyClubes, getNearbyMembers } = require('../controllers/clubsController')
 const { getClubEvents, createEvent, updateEvent, deleteEvent, getRoutes, addRoute, updateRoute, deleteRoute, joinEvent, leaveEvent, getEventParticipants, getPublicEvents, getMyClubsEvents } = require('../controllers/eventsController')
 const { getClubPosts } = require('../controllers/postsController')
 const { requireAuth, optionalAuth } = require('../middleware/auth')
@@ -27,5 +27,6 @@ router.get('/:clubId/routes', getRoutes)
 router.post('/:clubId/routes', requireAuth, addRoute)
 router.put('/:clubId/routes/:routeId', requireAuth, updateRoute)
 router.delete('/:clubId/routes/:routeId', requireAuth, deleteRoute)
+router.get('/:clubId/members/nearby', requireAuth, getNearbyMembers)
 
 module.exports = router

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { getClub, joinClub, getClubEvents, getRoutes, createEvent, addRoute, updateRoute, deleteRoute, joinEvent, leaveEvent, getEventParticipants, updateEvent, deleteEvent, updateMember, getClubPosts } from '../api/clubs'
+import { getClub, joinClub, getClubEvents, getRoutes, createEvent, addRoute, updateRoute, deleteRoute, joinEvent, leaveEvent, getEventParticipants, updateEvent, deleteEvent, updateMember, getClubPosts, getNearbyMembers, updateMyLocation } from '../api/clubs'
 import { useAuth } from '../context/AuthContext'
 import { getBandera } from '../components/PaisSelector'
 import PostCard, { LikesComments } from '../components/PostCard'
@@ -63,6 +63,12 @@ export default function Club() {
   // Editar ruta
   const [editingRoute, setEditingRoute] = useState(null)
   const [editRouteForm, setEditRouteForm] = useState({})
+
+  // Riders cerca
+  const [nearbyRiders, setNearbyRiders] = useState([])
+  const [nearbyLoading, setNearbyLoading] = useState(false)
+  const [nearbyError, setNearbyError] = useState(null)
+  const [nearbyLoaded, setNearbyLoaded] = useState(false)
 
   useEffect(() => { loadAll() }, [id])
 
@@ -214,6 +220,34 @@ export default function Club() {
       await updateMember(id, userId, { rol })
       loadAll()
     } catch {}
+  }
+
+  async function loadNearbyRiders() {
+    if (!navigator.geolocation) {
+      setNearbyError('Tu navegador no soporta geolocalización')
+      return
+    }
+    setNearbyLoading(true)
+    setNearbyError(null)
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude: lat, longitude: lng } = pos.coords
+          await updateMyLocation(lat, lng)
+          const { data } = await getNearbyMembers(id, lat, lng, 50)
+          setNearbyRiders(data)
+          setNearbyLoaded(true)
+        } catch {
+          setNearbyError('Error al buscar riders cercanos')
+        }
+        setNearbyLoading(false)
+      },
+      () => {
+        setNearbyError('Permiso de ubicación denegado')
+        setNearbyLoading(false)
+      },
+      { enableHighAccuracy: false, timeout: 10000 }
+    )
   }
 
   if (!club) return <div className="loading">Cargando...</div>
@@ -501,6 +535,43 @@ export default function Club() {
 
       {tab === 'miembros' && (
         <div>
+          {myRole && (
+            <div style={{ marginBottom: '1rem', padding: '0.85rem', background: 'var(--bg2)', border: '0.5px solid var(--border)', borderRadius: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: nearbyLoaded ? '0.75rem' : 0 }}>
+                <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>📍 Riders de tu club cerca</span>
+                <button
+                  className="btn-primary-sm"
+                  onClick={loadNearbyRiders}
+                  disabled={nearbyLoading}
+                >
+                  {nearbyLoading ? 'Buscando...' : nearbyLoaded ? 'Actualizar' : 'Buscar'}
+                </button>
+              </div>
+              {nearbyError && <p style={{ fontSize: '0.82rem', color: 'var(--danger)', marginTop: '0.5rem' }}>{nearbyError}</p>}
+              {nearbyLoaded && nearbyRiders.length === 0 && (
+                <p style={{ fontSize: '0.82rem', color: 'var(--text3)', marginTop: '0.5rem' }}>No hay riders de tu club a menos de 50 km</p>
+              )}
+              {nearbyRiders.map(r => (
+                <Link key={r.id} to={`/perfil/${r.id}`} className="member-row" style={{ borderBottom: 'none', padding: '0.4rem 0' }}>
+                  <div className="avatar-sm">
+                    {r.avatar_url ? <img src={r.avatar_url} alt="" /> : <span>{r.username?.slice(0,2).toUpperCase()}</span>}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>{r.username}</span>
+                    {(r.marca || r.modelo) && (
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text3)', display: 'block' }}>
+                        {[r.marca, r.modelo].filter(Boolean).join(' ')}
+                      </span>
+                    )}
+                  </div>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--purple-mid)', flexShrink: 0 }}>
+                    {Math.round(r.distancia_km)} km
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+
           {club.members?.map(m => (
             <div key={m.id} className="member-row">
               <Link to={`/perfil/${m.id}`}>

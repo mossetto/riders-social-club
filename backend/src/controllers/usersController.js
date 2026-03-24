@@ -188,4 +188,19 @@ async function searchByMoto(req, res) {
   }
 }
 
-module.exports = { getProfile, updateProfile, addMoto, getMe, searchUsers, searchByMoto }
+async function updateLocation(req, res) {
+  const { lat, lng } = req.body
+  if (lat == null || lng == null) return res.status(400).json({ error: 'lat y lng requeridos' })
+  try {
+    await pool.query(
+      'UPDATE users SET lat = $1, lng = $2, location_updated_at = NOW() WHERE id = $3',
+      [lat, lng, req.user.id]
+    )
+    res.json({ message: 'Ubicación actualizada' })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Error interno' })
+  }
+}
+
+module.exports = { getProfile, updateProfile, addMoto, getMe, searchUsers, searchByMoto, updateLocation }

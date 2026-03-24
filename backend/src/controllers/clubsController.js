@@ -218,4 +218,39 @@ async function leaveClub(req, res) {
   }
 }
 
-module.exports = { getClubs, getClub, createClub, updateClub, joinClub, leaveClub, updateMember, getMyClubes, canDo }
+async function getNearbyMembers(req, res) {
+  const { clubId } = req.params
+  const { lat, lng, radius } = req.query
+  if (!lat || !lng) return res.status(400).json({ error: 'lat y lng requeridos' })
+  const radiusKm = Number(radius) || 50
+  try {
+    const result = await pool.query(`
+      SELECT u.id, u.username, u.avatar_url, u.lat, u.lng, u.location_updated_at,
+        m.marca, m.modelo, m.apodo,
+        (6371 * acos(
+          cos(radians($1)) * cos(radians(u.lat)) *
+          cos(radians(u.lng) - radians($2)) +
+          sin(radians($1)) * sin(radians(u.lat))
+        )) AS distancia_km
+      FROM users u
+      JOIN club_members cm ON cm.user_id = u.id AND cm.club_id = $3 AND cm.estado = 'activo'
+      LEFT JOIN motos m ON m.user_id = u.id
+      WHERE u.lat IS NOT NULL AND u.lng IS NOT NULL
+        AND u.id != $4
+        AND u.location_updated_at > NOW() - INTERVAL '7 days'
+      HAVING (6371 * acos(
+          cos(radians($1)) * cos(radians(u.lat)) *
+          cos(radians(u.lng) - radians($2)) +
+          sin(radians($1)) * sin(radians(u.lat))
+        )) < $5
+      ORDER BY distancia_km
+      LIMIT 20
+    `, [lat, lng, clubId, req.user.id, radiusKm])
+    res.json(result.rows)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Error interno' })
+  }
+}
+
+module.exports = { getClubs, getClub, createClub, updateClub, joinClub, leaveClub, updateMember, getMyClubes, canDo, getNearbyMembers }
