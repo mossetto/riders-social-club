@@ -256,31 +256,30 @@ function PublicEventCard({ event: ev, onUpdate }) {
   const colorDias = diasRestantes === 0 ? '#e74c3c' : diasRestantes <= 3 ? '#e67e22' : 'var(--text3)'
 
   return (
-    <div className="event-card" style={{ textDecoration: 'none' }}>
+    <div className="event-card">
       <Link to={`/club/${ev.club?.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
-          <div style={{ flex: 1 }}>
-            <h3 style={{ fontSize: '0.95rem', fontWeight: 600 }}>{ev.titulo}</h3>
+        <div className="pub-event-header">
+          <div className="pub-event-info">
+            <h3>{ev.titulo}</h3>
             <p className="event-date">{new Date(ev.fecha_salida).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</p>
-            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: colorDias }}>{etiquetaDias}</span>
+            <span className="event-estado" style={{ color: colorDias }}>{etiquetaDias}</span>
           </div>
           {ev.club && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
-              <div className="club-escudo" style={{ width: 28, height: 28 }}>
-                {ev.club.escudo_url ? <img src={ev.club.escudo_url} alt="" /> : <span style={{ fontSize: '9px' }}>{ev.club.nombre?.slice(0,2).toUpperCase()}</span>}
+            <div className="pub-event-club">
+              <div className="club-escudo" style={{ width: 26, height: 26, fontSize: '8px' }}>
+                {ev.club.escudo_url ? <img src={ev.club.escudo_url} alt="" /> : <span>{ev.club.nombre?.slice(0,2).toUpperCase()}</span>}
               </div>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text2)' }}>{ev.club.nombre}</span>
+              <span className="pub-event-club-name">{ev.club.nombre}</span>
             </div>
           )}
         </div>
-        {ev.punto_encuentro && <p style={{ fontSize: '0.82rem', marginTop: '0.3rem' }}>📍 {ev.punto_encuentro}{ev.destino ? ` → ${ev.destino}` : ''}</p>}
-        <p style={{ fontSize: '0.78rem', color: 'var(--text3)', marginTop: '0.3rem' }}>👥 {ev.participantes_count || 0} anotados</p>
+        {ev.punto_encuentro && <p className="pub-event-meta">📍 {ev.punto_encuentro}{ev.destino ? ` → ${ev.destino}` : ''}</p>}
+        <p className="pub-event-anotados">👥 {ev.participantes_count || 0} anotados</p>
       </Link>
       {user && (
         <div style={{ marginTop: '0.5rem' }}>
           <button
-            className={ev.yo_participo ? 'btn-secondary' : 'btn-primary'}
-            style={{ fontSize: '0.8rem', padding: '0.3rem 0.8rem' }}
+            className={ev.yo_participo ? 'btn-secondary' : 'btn-primary-sm'}
             onClick={handleToggle}
             disabled={loading}
           >

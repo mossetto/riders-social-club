@@ -383,10 +383,10 @@ export default function Club() {
               ) : (
                 <>
                   <div className="event-card-top">
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <div>
+                      <div className="event-titulo-row">
                         <h3>{ev.titulo}</h3>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: estadoEvento(ev.fecha_salida).color }}>
+                        <span className="event-estado" style={{ color: estadoEvento(ev.fecha_salida).color }}>
                           {estadoEvento(ev.fecha_salida).label}
                         </span>
                       </div>
@@ -394,7 +394,6 @@ export default function Club() {
                     </div>
                     {ev.creador && (
                       <div className="event-creador">
-                        <span className="event-creador-name">{ev.creador.username}</span>
                         <div className="avatar-sm">
                           {ev.creador.avatar_url ? <img src={ev.creador.avatar_url} alt="" /> : <span>{ev.creador.username?.slice(0,2).toUpperCase()}</span>}
                         </div>
