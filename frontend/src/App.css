@@ -199,14 +199,21 @@ button { cursor: pointer; font-family: inherit; }
 .modal-card { background: var(--bg2); border: 0.5px solid var(--border); border-radius: 14px; padding: 1.5rem; width: 100%; max-width: 460px; display: flex; flex-direction: column; gap: 0.65rem; max-height: 90vh; overflow-y: auto; }
 
 /* Events & Routes */
-.event-card, .route-card { background: var(--bg2); border-radius: 10px; padding: 0.9rem; margin-bottom: 0.75rem; border: 0.5px solid var(--border); }
-.event-card h3 { font-size: 0.95rem; font-weight: 700; word-break: break-word; }
+.event-card { background: var(--bg2); border-radius: 10px; margin-bottom: 0.75rem; border: 0.5px solid var(--border); border-left: 3px solid var(--purple); padding: 0.85rem 0.9rem; }
+.event-card.ev-concluido { border-left-color: var(--text3); opacity: 0.7; }
+.event-card.ev-hoy { border-left-color: #4caf50; }
+.route-card { background: var(--bg2); border-radius: 10px; padding: 0.9rem; margin-bottom: 0.75rem; border: 0.5px solid var(--border); }
+.event-card h3 { font-size: 0.93rem; font-weight: 700; word-break: break-word; line-height: 1.3; margin: 0; }
 .route-card h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.4rem; }
-.event-date { font-size: 0.8rem; color: var(--text2); margin-top: 0.15rem; margin-bottom: 0.3rem; }
-.event-location { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.3rem; word-break: break-word; }
-.event-desc { font-size: 0.85rem; color: var(--text2); margin-bottom: 0.4rem; word-break: break-word; }
+.event-date { font-size: 0.78rem; color: var(--text2); margin-top: 0.2rem; line-height: 1.3; }
+.event-location { font-size: 0.82rem; color: var(--text); margin-top: 0.4rem; word-break: break-word; line-height: 1.4; }
+.event-desc { font-size: 0.82rem; color: var(--text2); margin-top: 0.3rem; word-break: break-word; line-height: 1.4; }
 .event-ruta-tag { font-size: 0.82rem; color: var(--purple-mid); margin-top: 0.3rem; }
-.event-estado { font-size: 0.72rem; font-weight: 600; padding: 0.15rem 0.45rem; border-radius: 4px; background: var(--bg3); white-space: nowrap; flex-shrink: 0; }
+.event-estado { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.02em; padding: 0.15rem 0.5rem; border-radius: 999px; white-space: nowrap; flex-shrink: 0; display: inline-block; }
+.event-estado.es-hoy { background: rgba(76,175,80,0.15); color: #4caf50; }
+.event-estado.es-pronto { background: rgba(230,126,34,0.15); color: #e67e22; }
+.event-estado.es-futuro { background: rgba(83,74,183,0.12); color: var(--purple-mid); }
+.event-estado.es-pasado { background: var(--bg3); color: var(--text3); }
 .route-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.5rem; }
 .route-autor { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
 .route-autor-name { font-size: 0.78rem; color: var(--text2); }
@@ -255,22 +262,26 @@ button { cursor: pointer; font-family: inherit; }
 .vis-option { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: var(--text2); cursor: pointer; }
 .vis-option input[type="radio"], .vis-option input[type="checkbox"] { width: auto; cursor: pointer; }
 
-/* Event card enhancements */
-.event-card-top { display: flex; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.4rem; }
+/* Event card layout */
+.event-card-top { display: flex; align-items: flex-start; gap: 0.65rem; margin-bottom: 0.15rem; }
 .event-card-top > div:first-child { flex: 1; min-width: 0; }
-.event-titulo-row { display: flex; align-items: baseline; gap: 0.4rem; flex-wrap: wrap; }
-.event-creador { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
-.event-creador-name { font-size: 0.78rem; color: var(--text2); }
+.event-titulo-row { margin-bottom: 0.15rem; }
+.event-creador { flex-shrink: 0; }
+.event-creador-name { font-size: 0.75rem; color: var(--text3); }
+.event-footer { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.6rem; padding-top: 0.5rem; border-top: 0.5px solid var(--border); flex-wrap: wrap; }
+.event-footer-left { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.event-footer-right { display: flex; align-items: center; gap: 0.5rem; }
 .event-actions { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.6rem; flex-wrap: wrap; }
-.event-participants { margin-top: 0.75rem; border-top: 0.5px solid var(--border); padding-top: 0.6rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.event-participants { margin-top: 0.6rem; border-top: 0.5px solid var(--border); padding-top: 0.6rem; display: flex; flex-direction: column; gap: 0.4rem; }
 .participant-row { display: flex; align-items: center; gap: 0.5rem; }
 /* Public event card (Explorar) */
-.pub-event-header { display: flex; align-items: flex-start; gap: 0.5rem; }
+.pub-event-header { display: flex; align-items: flex-start; gap: 0.65rem; }
 .pub-event-info { flex: 1; min-width: 0; }
-.pub-event-club { display: flex; align-items: center; gap: 0.35rem; flex-shrink: 0; max-width: 120px; }
-.pub-event-club-name { font-size: 0.75rem; color: var(--text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pub-event-meta { font-size: 0.82rem; margin-top: 0.3rem; word-break: break-word; }
-.pub-event-anotados { font-size: 0.78rem; color: var(--text3); margin-top: 0.25rem; }
+.pub-event-club { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; flex-shrink: 0; }
+.pub-event-club-name { font-size: 0.68rem; color: var(--text3); max-width: 50px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; }
+.pub-event-meta { font-size: 0.82rem; margin-top: 0.35rem; word-break: break-word; color: var(--text); }
+.pub-event-anotados { font-size: 0.75rem; color: var(--text3); margin-top: 0.2rem; }
+.pub-event-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 0.5rem; padding-top: 0.45rem; border-top: 0.5px solid var(--border); }
 
 /* Member role select */
 .role-select { background: var(--bg3); border: 0.5px solid var(--border); border-radius: 6px; padding: 0.25rem 0.5rem; color: var(--text); font-size: 0.78rem; width: auto; }

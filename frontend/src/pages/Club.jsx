@@ -366,8 +366,12 @@ export default function Club() {
             </form>
           )}
 
-          {events.length === 0 ? <p className="empty">No hay salidas programadas</p> : events.map(ev => (
-            <div key={ev.id} id={`item-${ev.id}`} className={`event-card${highlightId === String(ev.id) ? ' highlight-item' : ''}${editingEvent === ev.id ? ' editing-active' : ''}`}>
+          {events.length === 0 ? <p className="empty">No hay salidas programadas</p> : events.map(ev => {
+            const est = estadoEvento(ev.fecha_salida)
+            const estClass = est.label === 'Concluido' ? 'es-pasado' : est.label === '¡Es hoy!' ? 'es-hoy' : est.label === 'Es mañana' ? 'es-pronto' : 'es-futuro'
+            const cardClass = est.label === 'Concluido' ? ' ev-concluido' : est.label === '¡Es hoy!' ? ' ev-hoy' : ''
+            return (
+            <div key={ev.id} id={`item-${ev.id}`} className={`event-card${cardClass}${highlightId === String(ev.id) ? ' highlight-item' : ''}${editingEvent === ev.id ? ' editing-active' : ''}`}>
               {editingEvent === ev.id ? (
                 <form onSubmit={handleSaveEditEvent} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   <input className="input" value={editEventForm.titulo} onChange={e => setEditEventForm(f => ({ ...f, titulo: e.target.value }))} required />
@@ -391,17 +395,18 @@ export default function Club() {
                     <div>
                       <div className="event-titulo-row">
                         <h3>{ev.titulo}</h3>
-                        <span className="event-estado" style={{ color: estadoEvento(ev.fecha_salida).color }}>
-                          {estadoEvento(ev.fecha_salida).label}
-                        </span>
                       </div>
-                      <p className="event-date">{new Date(ev.fecha_salida).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</p>
+                      <p className="event-date">
+                        {new Date(ev.fecha_salida).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}
+                        {' · '}<span className={`event-estado ${estClass}`}>{est.label}</span>
+                      </p>
                     </div>
                     {ev.creador && (
                       <div className="event-creador">
                         <div className="avatar-sm">
                           {ev.creador.avatar_url ? <img src={ev.creador.avatar_url} alt="" /> : <span>{ev.creador.username?.slice(0,2).toUpperCase()}</span>}
                         </div>
+                        <span className="event-creador-name">{ev.creador.username}</span>
                       </div>
                     )}
                   </div>
@@ -410,34 +415,37 @@ export default function Club() {
                   {ev.ruta && <a href={ev.ruta.maps_url} target="_blank" rel="noopener noreferrer" className="map-link">🗺️ Ver ruta: {ev.ruta.nombre}</a>}
                   {!ev.ruta && ev.ruta_url && <a href={ev.ruta_url} target="_blank" rel="noopener noreferrer" className="map-link">🗺️ Ver ruta en Google Maps</a>}
 
-                  <div className="event-actions" style={{ marginTop: '0.6rem' }}>
-                    {user && (
-                      <button
-                        className={ev.yo_participo ? 'btn-secondary' : 'btn-primary-sm'}
-                        onClick={() => handleToggleParticipacion(ev)}
-                      >
-                        {ev.yo_participo ? 'No participar' : 'Anotarse'}
+                  <div className="event-footer">
+                    <div className="event-footer-left">
+                      {user && (
+                        <button
+                          className={ev.yo_participo ? 'btn-secondary' : 'btn-primary-sm'}
+                          onClick={() => handleToggleParticipacion(ev)}
+                        >
+                          {ev.yo_participo ? 'No participar' : 'Anotarse'}
+                        </button>
+                      )}
+                      <button className="btn-link" style={{ fontSize: '0.78rem' }} onClick={() => handleVerParticipantes(ev.id)}>
+                        👥 {ev.participantes_count || 0} {expandedParticipants === ev.id ? '▲' : '▼'}
                       </button>
-                    )}
-                    <button className="btn-link" style={{ fontSize: '0.82rem' }} onClick={() => handleVerParticipantes(ev.id)}>
-                      {expandedParticipants === ev.id ? 'Ocultar' : `Ver participantes (${ev.participantes_count || 0})`}
-                    </button>
-                    {canCreateEvent && (
-                      <button className="btn-icon" onClick={() => {
-                        setEditingEvent(ev.id)
-                        const d = new Date(ev.fecha_salida)
-                        const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
-                        setEditEventForm({ titulo: ev.titulo, descripcion: ev.descripcion || '', fecha_salida: local, punto_encuentro: ev.punto_encuentro || '', destino: ev.destino || '' })
-                        setEditEventPublico(!!ev.es_publico)
-                        setTimeout(() => {
-                          const el = document.getElementById(`item-${ev.id}`)
-                          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                        }, 50)
-                      }}>✏️</button>
-                    )}
+                    </div>
+                    <div className="event-footer-right">
+                      <LikesComments postId={ev.post_id} likes={ev.likes} comentarios={ev.comentarios} />
+                      {canCreateEvent && (
+                        <button className="btn-icon" onClick={() => {
+                          setEditingEvent(ev.id)
+                          const d = new Date(ev.fecha_salida)
+                          const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+                          setEditEventForm({ titulo: ev.titulo, descripcion: ev.descripcion || '', fecha_salida: local, punto_encuentro: ev.punto_encuentro || '', destino: ev.destino || '' })
+                          setEditEventPublico(!!ev.es_publico)
+                          setTimeout(() => {
+                            const el = document.getElementById(`item-${ev.id}`)
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                          }, 50)
+                        }}>✏️</button>
+                      )}
+                    </div>
                   </div>
-
-                  <LikesComments postId={ev.post_id} likes={ev.likes} comentarios={ev.comentarios} />
 
                   {expandedParticipants === ev.id && (
                     <div className="event-participants">
@@ -458,7 +466,7 @@ export default function Club() {
                 </>
               )}
             </div>
-          ))}
+          )})}
         </div>
       )}
 

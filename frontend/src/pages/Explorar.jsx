@@ -253,20 +253,23 @@ function PublicEventCard({ event: ev, onUpdate }) {
     return Math.ceil((fecha - hoy) / (1000 * 60 * 60 * 24))
   })()
   const etiquetaDias = diasRestantes === 0 ? '¡Es hoy!' : diasRestantes === 1 ? 'Es mañana' : `En ${diasRestantes} días`
-  const colorDias = diasRestantes === 0 ? '#e74c3c' : diasRestantes <= 3 ? '#e67e22' : 'var(--text3)'
+  const estClass = diasRestantes === 0 ? 'es-hoy' : diasRestantes <= 3 ? 'es-pronto' : 'es-futuro'
+  const cardClass = diasRestantes === 0 ? ' ev-hoy' : ''
 
   return (
-    <div className="event-card">
+    <div className={`event-card${cardClass}`}>
       <Link to={`/club/${ev.club?.id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
         <div className="pub-event-header">
           <div className="pub-event-info">
             <h3>{ev.titulo}</h3>
-            <p className="event-date">{new Date(ev.fecha_salida).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</p>
-            <span className="event-estado" style={{ color: colorDias }}>{etiquetaDias}</span>
+            <p className="event-date">
+              {new Date(ev.fecha_salida).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}
+              {' · '}<span className={`event-estado ${estClass}`}>{etiquetaDias}</span>
+            </p>
           </div>
           {ev.club && (
             <div className="pub-event-club">
-              <div className="club-escudo" style={{ width: 26, height: 26, fontSize: '8px' }}>
+              <div className="club-escudo" style={{ width: 30, height: 30, fontSize: '9px' }}>
                 {ev.club.escudo_url ? <img src={ev.club.escudo_url} alt="" /> : <span>{ev.club.nombre?.slice(0,2).toUpperCase()}</span>}
               </div>
               <span className="pub-event-club-name">{ev.club.nombre}</span>
@@ -274,10 +277,10 @@ function PublicEventCard({ event: ev, onUpdate }) {
           )}
         </div>
         {ev.punto_encuentro && <p className="pub-event-meta">📍 {ev.punto_encuentro}{ev.destino ? ` → ${ev.destino}` : ''}</p>}
-        <p className="pub-event-anotados">👥 {ev.participantes_count || 0} anotados</p>
       </Link>
-      {user && (
-        <div style={{ marginTop: '0.5rem' }}>
+      <div className="pub-event-footer">
+        <span className="pub-event-anotados">👥 {ev.participantes_count || 0} anotados</span>
+        {user && (
           <button
             className={ev.yo_participo ? 'btn-secondary' : 'btn-primary-sm'}
             onClick={handleToggle}
@@ -285,8 +288,8 @@ function PublicEventCard({ event: ev, onUpdate }) {
           >
             {ev.yo_participo ? 'No participar' : 'Anotarse'}
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
