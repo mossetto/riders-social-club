@@ -242,11 +242,16 @@ export default function Club() {
         }
         setNearbyLoading(false)
       },
-      () => {
-        setNearbyError('Permiso de ubicación denegado')
+      (err) => {
+        const msgs = {
+          1: 'Permiso de ubicación denegado. Habilitalo en la config del navegador.',
+          2: 'No se pudo obtener tu ubicación. Asegurate de tener el GPS activado.',
+          3: 'Se agotó el tiempo buscando tu ubicación. Intentá de nuevo.'
+        }
+        setNearbyError(msgs[err.code] || 'Error de geolocalización')
         setNearbyLoading(false)
       },
-      { enableHighAccuracy: false, timeout: 10000 }
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 }
     )
   }
 
