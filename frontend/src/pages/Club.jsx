@@ -273,32 +273,34 @@ export default function Club() {
           </div>
         )}
         <div className="club-header-body">
-          <div className="club-escudo-lg">
-            {club.escudo_url ? <img src={club.escudo_url} alt={club.nombre} /> : <span>{club.nombre.slice(0,2).toUpperCase()}</span>}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
-              <div style={{ minWidth: 0 }}>
-                <h1 className="club-header-nombre">{club.nombre}</h1>
-                <p className="club-meta">
-                  {club.miembros} miembros
-                  {club.provincia && ` · ${club.provincia}`}
-                  {club.pais && ` · ${getBandera(club.pais)} ${club.pais}`}
-                  {` · ${club.tipo}`}
-                </p>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.4rem', flexShrink: 0 }}>
-                {myRole && <span className="role-badge">{myRole}</span>}
-                {isFundador && (
-                  <button className="btn-secondary" style={{ fontSize: '0.78rem', padding: '0.3rem 0.65rem', whiteSpace: 'nowrap' }} onClick={() => navigate(`/club/${id}/configurar`)}>
-                    ⚙️ Configurar club
-                  </button>
-                )}
-              </div>
+          <div className="club-header-top">
+            <div className="club-escudo-lg">
+              {club.escudo_url ? <img src={club.escudo_url} alt={club.nombre} /> : <span>{club.nombre.slice(0,2).toUpperCase()}</span>}
             </div>
-            {club.slogan && <p className="club-slogan" style={{ marginTop: '0.4rem' }}>{club.slogan}</p>}
-            {!joined && user && <button className="btn-primary" style={{ marginTop: '0.6rem', fontSize: '0.85rem' }} onClick={handleJoin}>Solicitar ingreso</button>}
+            <div className="club-header-info">
+              <h1 className="club-header-nombre">{club.nombre}</h1>
+              <p className="club-meta">
+                {club.miembros} miembros
+                {club.provincia && ` · ${club.provincia}`}
+                {club.pais && ` · ${getBandera(club.pais)} ${club.pais}`}
+                {` · ${club.tipo}`}
+              </p>
+            </div>
+            <div className="club-header-actions">
+              {myRole && <span className="role-badge">{myRole}</span>}
+              {isFundador && (
+                <button className="btn-secondary" style={{ fontSize: '0.75rem', padding: '0.25rem 0.55rem', whiteSpace: 'nowrap' }} onClick={() => navigate(`/club/${id}/configurar`)}>
+                  Configurar club
+                </button>
+              )}
+              {!joined && user && (
+                <button className="btn-primary-sm" onClick={handleJoin}>
+                  {club.tipo === 'privado' ? 'Solicitar unirse' : 'Unirse'}
+                </button>
+              )}
+            </div>
           </div>
+          {club.slogan && <p className="club-header-desc">{club.slogan}</p>}
         </div>
       </div>
 
@@ -398,53 +400,55 @@ export default function Club() {
                       </div>
                       <p className="event-date">
                         {new Date(ev.fecha_salida).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}
-                        {' · '}<span className={`event-estado ${estClass}`}>{est.label}</span>
                       </p>
                     </div>
-                    {ev.creador && (
-                      <div className="event-creador">
-                        <div className="avatar-sm">
-                          {ev.creador.avatar_url ? <img src={ev.creador.avatar_url} alt="" /> : <span>{ev.creador.username?.slice(0,2).toUpperCase()}</span>}
-                        </div>
-                        <span className="event-creador-name">{ev.creador.username}</span>
-                      </div>
+                    <span className={`event-estado ${estClass}`}>{est.label}</span>
+                    {canCreateEvent && (
+                      <button className="btn-icon" onClick={() => {
+                        setEditingEvent(ev.id)
+                        const d = new Date(ev.fecha_salida)
+                        const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+                        setEditEventForm({ titulo: ev.titulo, descripcion: ev.descripcion || '', fecha_salida: local, punto_encuentro: ev.punto_encuentro || '', destino: ev.destino || '' })
+                        setEditEventPublico(!!ev.es_publico)
+                        setTimeout(() => {
+                          const el = document.getElementById(`item-${ev.id}`)
+                          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                        }, 50)
+                      }}>✏️</button>
                     )}
                   </div>
                   {ev.punto_encuentro && <p className="event-location">📍 {ev.punto_encuentro}{ev.destino ? ` → ${ev.destino}` : ''}</p>}
                   {ev.descripcion && <p className="event-desc">{ev.descripcion}</p>}
-                  {ev.ruta && <a href={ev.ruta.maps_url} target="_blank" rel="noopener noreferrer" className="map-link">🗺️ Ver ruta: {ev.ruta.nombre}</a>}
-                  {!ev.ruta && ev.ruta_url && <a href={ev.ruta_url} target="_blank" rel="noopener noreferrer" className="map-link">🗺️ Ver ruta en Google Maps</a>}
+
+                  <div className="event-actions">
+                    {user && (
+                      <button
+                        className={ev.yo_participo ? 'btn-secondary' : 'btn-primary-sm'}
+                        onClick={() => handleToggleParticipacion(ev)}
+                      >
+                        {ev.yo_participo ? 'No participar' : 'Anotarse'}
+                      </button>
+                    )}
+                    <button className="btn-link" style={{ fontSize: '0.78rem' }} onClick={() => handleVerParticipantes(ev.id)}>
+                      Ver participantes ({ev.participantes_count || 0})
+                    </button>
+                    {ev.ruta && <a href={ev.ruta.maps_url} target="_blank" rel="noopener noreferrer" className="map-link">🗺️ Ver ruta: {ev.ruta.nombre}</a>}
+                    {!ev.ruta && ev.ruta_url && <a href={ev.ruta_url} target="_blank" rel="noopener noreferrer" className="map-link">🗺️ Ver ruta en Google Maps</a>}
+                  </div>
 
                   <div className="event-footer">
                     <div className="event-footer-left">
-                      {user && (
-                        <button
-                          className={ev.yo_participo ? 'btn-secondary' : 'btn-primary-sm'}
-                          onClick={() => handleToggleParticipacion(ev)}
-                        >
-                          {ev.yo_participo ? 'No participar' : 'Anotarse'}
-                        </button>
-                      )}
-                      <button className="btn-link" style={{ fontSize: '0.78rem' }} onClick={() => handleVerParticipantes(ev.id)}>
-                        👥 {ev.participantes_count || 0} {expandedParticipants === ev.id ? '▲' : '▼'}
-                      </button>
-                    </div>
-                    <div className="event-footer-right">
                       <LikesComments postId={ev.post_id} likes={ev.likes} comentarios={ev.comentarios} />
-                      {canCreateEvent && (
-                        <button className="btn-icon" onClick={() => {
-                          setEditingEvent(ev.id)
-                          const d = new Date(ev.fecha_salida)
-                          const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
-                          setEditEventForm({ titulo: ev.titulo, descripcion: ev.descripcion || '', fecha_salida: local, punto_encuentro: ev.punto_encuentro || '', destino: ev.destino || '' })
-                          setEditEventPublico(!!ev.es_publico)
-                          setTimeout(() => {
-                            const el = document.getElementById(`item-${ev.id}`)
-                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                          }, 50)
-                        }}>✏️</button>
-                      )}
                     </div>
+                    {ev.creador && (
+                      <div className="route-autor">
+                        <span className="route-autor-name">Compartida por:</span>
+                        <div className="avatar-sm" style={{ width: 22, height: 22, fontSize: '8px' }}>
+                          {ev.creador.avatar_url ? <img src={ev.creador.avatar_url} alt="" /> : <span>{ev.creador.username?.slice(0,2).toUpperCase()}</span>}
+                        </div>
+                        <span className="route-autor-name">{ev.creador.username}</span>
+                      </div>
+                    )}
                   </div>
 
                   {expandedParticipants === ev.id && (
@@ -511,33 +515,34 @@ export default function Club() {
               ) : (
                 <>
                   <div className="route-header">
-                    <div style={{ flex: 1 }}>
-                      <h3>{r.nombre}</h3>
-                      {r.descripcion && <p style={{ fontSize: '0.85rem', color: 'var(--text2)', marginTop: '0.2rem' }}>{r.descripcion}</p>}
-                      {r.maps_url && <a href={r.maps_url} target="_blank" rel="noopener noreferrer" className="map-link" style={{ marginTop: '0.5rem', display: 'inline-block' }}>🗺️ Ver en Google Maps</a>}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      {r.agregada_por && (
-                        <div className="route-autor">
-                          <div className="avatar-sm">
-                            {r.agregada_por.avatar_url ? <img src={r.agregada_por.avatar_url} alt="" /> : <span>{r.agregada_por.username?.slice(0,2).toUpperCase()}</span>}
-                          </div>
-                          <span className="route-autor-name">{r.agregada_por.username}</span>
-                        </div>
-                      )}
-                      {(canAddRoute || r.agregada_por?.id === user?.id) && (
-                        <button className="btn-icon" onClick={() => {
-                          setEditingRoute(r.id)
-                          setEditRouteForm({ nombre: r.nombre, descripcion: r.descripcion || '', maps_url: r.maps_url || '' })
-                          setTimeout(() => {
-                            const el = document.getElementById(`item-${r.id}`)
-                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                          }, 50)
-                        }}>✏️</button>
-                      )}
-                    </div>
+                    <h3>{r.nombre}</h3>
+                    {(canAddRoute || r.agregada_por?.id === user?.id) && (
+                      <button className="btn-icon" onClick={() => {
+                        setEditingRoute(r.id)
+                        setEditRouteForm({ nombre: r.nombre, descripcion: r.descripcion || '', maps_url: r.maps_url || '' })
+                        setTimeout(() => {
+                          const el = document.getElementById(`item-${r.id}`)
+                          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                        }, 50)
+                      }}>✏️</button>
+                    )}
                   </div>
-                  <LikesComments postId={r.post_id} likes={r.likes} comentarios={r.comentarios} />
+                  {r.descripcion && <p className="route-desc">{r.descripcion}</p>}
+                  {r.maps_url && <a href={r.maps_url} target="_blank" rel="noopener noreferrer" className="map-link">🗺️ Ver en Google Maps</a>}
+                  <div className="route-footer">
+                    <div className="route-footer-left">
+                      <LikesComments postId={r.post_id} likes={r.likes} comentarios={r.comentarios} />
+                    </div>
+                    {r.agregada_por && (
+                      <div className="route-autor">
+                        <span className="route-autor-name">Compartida por:</span>
+                        <div className="avatar-sm" style={{ width: 22, height: 22, fontSize: '8px' }}>
+                          {r.agregada_por.avatar_url ? <img src={r.agregada_por.avatar_url} alt="" /> : <span>{r.agregada_por.username?.slice(0,2).toUpperCase()}</span>}
+                        </div>
+                        <span className="route-autor-name">{r.agregada_por.username}</span>
+                      </div>
+                    )}
+                  </div>
                 </>
               )}
             </div>

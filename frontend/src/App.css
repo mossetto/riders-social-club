@@ -137,15 +137,22 @@ button { cursor: pointer; font-family: inherit; }
 .avatar-sm { width: 30px; height: 30px; border-radius: 50%; background: var(--purple); display: flex; align-items: center; justify-content: center; color: var(--purple-light); font-size: 11px; font-weight: 600; flex-shrink: 0; overflow: hidden; }
 .avatar-sm img { width: 100%; height: 100%; object-fit: cover; }
 
-/* Club Card */
-.club-card { background: var(--bg2); border-radius: 10px; padding: 0.85rem; margin-bottom: 0.75rem; display: flex; gap: 0.75rem; border: 0.5px solid var(--border); }
+/* Club Card (Explorar) */
+.club-card { background: var(--bg2); border-radius: 12px; margin-bottom: 0.75rem; border: 0.5px solid var(--border); overflow: hidden; }
+.club-card-portada { height: 120px; overflow: hidden; }
+.club-card-portada img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.club-card-body { padding: 0.85rem; }
+.club-card-top { display: flex; gap: 0.65rem; align-items: flex-start; }
 .club-escudo { width: 40px; height: 40px; border-radius: 8px; background: var(--purple); display: flex; align-items: center; justify-content: center; color: var(--purple-light); font-size: 13px; font-weight: 700; flex-shrink: 0; overflow: hidden; }
 .club-escudo img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
-.club-info { flex: 1; }
-.club-nombre { font-size: 0.95rem; font-weight: 600; }
+.club-card-info { flex: 1; min-width: 0; }
+.club-nombre { font-size: 0.95rem; font-weight: 700; }
+.club-meta-line { font-size: 0.75rem; color: var(--text3); margin-top: 2px; }
+.club-card-actions { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 0.3rem; }
 .club-slogan { font-size: 0.8rem; color: var(--text2); margin-top: 2px; }
 .club-stats { font-size: 0.78rem; color: var(--text3); margin-top: 4px; }
 .club-ultima-act { font-size: 0.75rem; color: var(--text3); margin-top: 4px; }
+.club-card-desc { font-size: 0.82rem; color: var(--text2); margin-top: 0.5rem; padding-top: 0.5rem; border-top: 0.5px solid var(--border); line-height: 1.45; }
 
 /* Filter Row */
 .filter-row { display: flex; gap: 0.4rem; overflow-x: auto; padding-bottom: 0.5rem; margin-bottom: 0.75rem; scrollbar-width: none; }
@@ -177,16 +184,19 @@ button { cursor: pointer; font-family: inherit; }
 .edit-form h3 { font-size: 0.95rem; font-weight: 600; }
 .file-label { font-size: 0.82rem; color: var(--text2); display: flex; flex-direction: column; gap: 0.3rem; }
 
-/* Club Header (new card design) */
+/* Club Header (detail page) */
 .club-header-card { background: var(--bg2); border-radius: 12px; border: 0.5px solid var(--border); margin-bottom: 1rem; overflow: hidden; }
 .club-portada-inner { height: 160px; overflow: hidden; }
 .club-portada-inner img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.club-header-body { display: flex; gap: 0.85rem; align-items: flex-start; padding: 0.85rem 1rem; }
-.club-escudo-lg { width: 52px; height: 52px; border-radius: 8px; background: var(--purple); display: flex; align-items: center; justify-content: center; color: var(--purple-light); font-size: 16px; font-weight: 700; flex-shrink: 0; overflow: hidden; }
+.club-header-body { padding: 0.85rem 1rem; }
+.club-header-top { display: flex; gap: 0.65rem; align-items: flex-start; }
+.club-escudo-lg { width: 44px; height: 44px; border-radius: 8px; background: var(--purple); display: flex; align-items: center; justify-content: center; color: var(--purple-light); font-size: 14px; font-weight: 700; flex-shrink: 0; overflow: hidden; }
 .club-escudo-lg img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+.club-header-info { flex: 1; min-width: 0; }
 .club-header-nombre { font-size: 1rem; font-weight: 700; }
-.club-slogan { font-size: 0.82rem; color: var(--text2); }
-.club-meta { font-size: 0.78rem; color: var(--text3); margin-top: 0.15rem; }
+.club-meta { font-size: 0.75rem; color: var(--text3); margin-top: 2px; }
+.club-header-actions { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 0.3rem; }
+.club-header-desc { font-size: 0.82rem; color: var(--text2); margin-top: 0.6rem; padding-top: 0.5rem; border-top: 0.5px solid var(--border); line-height: 1.45; }
 .role-badge { display: inline-block; background: var(--purple-light); color: var(--purple-dark); border-radius: 4px; padding: 0.15rem 0.5rem; font-size: 0.72rem; font-weight: 600; }
 
 /* Forms */
@@ -204,7 +214,7 @@ button { cursor: pointer; font-family: inherit; }
 .event-card.ev-hoy { border-left-color: #4caf50; }
 .route-card { background: var(--bg2); border-radius: 10px; padding: 0.9rem; margin-bottom: 0.75rem; border: 0.5px solid var(--border); }
 .event-card h3 { font-size: 0.93rem; font-weight: 700; word-break: break-word; line-height: 1.3; margin: 0; }
-.route-card h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.4rem; }
+.route-card h3 { font-size: 0.93rem; font-weight: 700; margin: 0; }
 .event-date { font-size: 0.78rem; color: var(--text2); margin-top: 0.2rem; line-height: 1.3; }
 .event-location { font-size: 0.82rem; color: var(--text); margin-top: 0.4rem; word-break: break-word; line-height: 1.4; }
 .event-desc { font-size: 0.82rem; color: var(--text2); margin-top: 0.3rem; word-break: break-word; line-height: 1.4; }
@@ -214,9 +224,12 @@ button { cursor: pointer; font-family: inherit; }
 .event-estado.es-pronto { background: rgba(230,126,34,0.15); color: #e67e22; }
 .event-estado.es-futuro { background: rgba(83,74,183,0.12); color: var(--purple-mid); }
 .event-estado.es-pasado { background: var(--bg3); color: var(--text3); }
-.route-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.5rem; }
-.route-autor { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
-.route-autor-name { font-size: 0.78rem; color: var(--text2); }
+.route-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; }
+.route-desc { font-size: 0.82rem; color: var(--text2); margin-top: 0.4rem; line-height: 1.45; }
+.route-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 0.6rem; padding-top: 0.5rem; border-top: 0.5px solid var(--border); }
+.route-footer-left { display: flex; align-items: center; gap: 0.5rem; }
+.route-autor { display: flex; align-items: center; gap: 0.35rem; flex-shrink: 0; }
+.route-autor-name { font-size: 0.75rem; color: var(--text3); }
 .map-embed { margin-top: 0.75rem; border-radius: 8px; overflow: hidden; height: 200px; }
 .map-embed iframe { width: 100%; height: 100%; border: none; }
 
@@ -266,7 +279,7 @@ button { cursor: pointer; font-family: inherit; }
 .event-card-top { display: flex; align-items: flex-start; gap: 0.65rem; margin-bottom: 0.15rem; }
 .event-card-top > div:first-child { flex: 1; min-width: 0; }
 .event-titulo-row { margin-bottom: 0.15rem; }
-.event-creador { flex-shrink: 0; }
+.event-creador { flex-shrink: 0; display: flex; align-items: center; gap: 0.35rem; }
 .event-creador-name { font-size: 0.75rem; color: var(--text3); }
 .event-footer { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.6rem; padding-top: 0.5rem; border-top: 0.5px solid var(--border); flex-wrap: wrap; }
 .event-footer-left { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }

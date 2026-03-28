@@ -14,6 +14,7 @@ export default function Explorar() {
   // Tab Clubes
   const [allClubs, setAllClubs] = useState([])
   const [misClubIds, setMisClubIds] = useState([])
+  const [misClubRoles, setMisClubRoles] = useState({})
   const [provincia, setProvincia] = useState('')
   const [loadingClubes, setLoadingClubes] = useState(true)
 
@@ -45,7 +46,12 @@ export default function Explorar() {
       if (user) promises.push(api.get('/clubs/mine'))
       const results = await Promise.all(promises)
       setAllClubs(results[0].data)
-      if (user) setMisClubIds(results[1].data.map(c => c.id))
+      if (user) {
+        setMisClubIds(results[1].data.map(c => c.id))
+        const roles = {}
+        results[1].data.forEach(c => { roles[c.id] = c.rol })
+        setMisClubRoles(roles)
+      }
     } catch {}
     setLoadingClubes(false)
   }
@@ -132,7 +138,7 @@ export default function Explorar() {
               clubsFiltrados.length === 0
                 ? <p className="empty">No hay clubes todavía</p>
                 : clubsFiltrados.map(c => (
-                    <ClubCard key={c.id} club={c} isMember={misClubIds.includes(c.id)} onJoin={loadClubes} />
+                    <ClubCard key={c.id} club={c} isMember={misClubIds.includes(c.id)} myRole={misClubRoles[c.id]} onJoin={loadClubes} />
                   ))
             )}
           </>
