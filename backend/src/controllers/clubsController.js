@@ -49,12 +49,27 @@ async function getClub(req, res) {
     if (!club.rows.length) return res.status(404).json({ error: 'Club no encontrado' })
 
     const members = await pool.query(`
-      SELECT u.id, u.username, u.avatar_url, cm.rol
+      SELECT u.id, u.username, u.avatar_url, cm.rol, cm.estado, cm.joined_at
       FROM club_members cm JOIN users u ON u.id = cm.user_id
       WHERE cm.club_id = $1 AND cm.estado = 'activo'
       ORDER BY CASE cm.rol WHEN 'fundador' THEN 1 WHEN 'organizador' THEN 2 WHEN 'colaborador' THEN 3 ELSE 4 END`, [id])
 
-    res.json({ ...club.rows[0], members: members.rows })
+    const result = { ...club.rows[0], members: members.rows }
+
+    // Return pending members to users with ingreso permissions
+    if (req.user) {
+      const myMember = members.rows.find(m => m.id === req.user.id)
+      if (myMember && canDo(club.rows[0].config_ingreso || 'fundador', myMember.rol)) {
+        const pending = await pool.query(`
+          SELECT u.id, u.username, u.avatar_url, cm.rol, cm.estado, cm.joined_at
+          FROM club_members cm JOIN users u ON u.id = cm.user_id
+          WHERE cm.club_id = $1 AND cm.estado = 'pendiente'
+          ORDER BY cm.joined_at DESC`, [id])
+        result.pending_members = pending.rows
+      }
+    }
+
+    res.json(result)
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Error interno' })

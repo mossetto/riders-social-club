@@ -142,8 +142,8 @@ button { cursor: pointer; font-family: inherit; }
 .club-card-portada { height: 120px; overflow: hidden; }
 .club-card-portada img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .club-card-body { padding: 0.85rem; }
-.club-card-top { display: flex; gap: 0.65rem; align-items: flex-start; }
-.club-escudo { width: 40px; height: 40px; border-radius: 8px; background: var(--purple); display: flex; align-items: center; justify-content: center; color: var(--purple-light); font-size: 13px; font-weight: 700; flex-shrink: 0; overflow: hidden; }
+.club-card-top { display: flex; gap: 0.75rem; align-items: center; }
+.club-escudo { width: 44px; height: 44px; border-radius: 8px; background: var(--purple); display: flex; align-items: center; justify-content: center; color: var(--purple-light); font-size: 13px; font-weight: 700; flex-shrink: 0; overflow: hidden; }
 .club-escudo img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
 .club-card-info { flex: 1; min-width: 0; }
 .club-nombre { font-size: 0.95rem; font-weight: 700; }
@@ -189,11 +189,11 @@ button { cursor: pointer; font-family: inherit; }
 .club-portada-inner { height: 160px; overflow: hidden; }
 .club-portada-inner img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .club-header-body { padding: 0.85rem 1rem; }
-.club-header-top { display: flex; gap: 0.65rem; align-items: flex-start; }
-.club-escudo-lg { width: 44px; height: 44px; border-radius: 8px; background: var(--purple); display: flex; align-items: center; justify-content: center; color: var(--purple-light); font-size: 14px; font-weight: 700; flex-shrink: 0; overflow: hidden; }
-.club-escudo-lg img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+.club-header-top { display: flex; gap: 0.75rem; align-items: center; }
+.club-escudo-lg { width: 54px; height: 54px; border-radius: 10px; background: var(--purple); display: flex; align-items: center; justify-content: center; color: var(--purple-light); font-size: 16px; font-weight: 700; flex-shrink: 0; overflow: hidden; }
+.club-escudo-lg img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
 .club-header-info { flex: 1; min-width: 0; }
-.club-header-nombre { font-size: 1rem; font-weight: 700; }
+.club-header-nombre { font-size: 1rem; font-weight: 700; line-height: 1.2; }
 .club-meta { font-size: 0.75rem; color: var(--text3); margin-top: 2px; }
 .club-header-actions { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 0.3rem; }
 .club-header-desc { font-size: 0.82rem; color: var(--text2); margin-top: 0.6rem; padding-top: 0.5rem; border-top: 0.5px solid var(--border); line-height: 1.45; }
@@ -236,6 +236,8 @@ button { cursor: pointer; font-family: inherit; }
 /* Members */
 .member-row { display: flex; align-items: center; gap: 0.65rem; padding: 0.6rem 0; border-bottom: 0.5px solid var(--border); }
 .member-name { flex: 1; font-size: 0.9rem; }
+.members-section-label { font-weight: 600; font-size: 0.82rem; color: var(--text2); margin: 1rem 0 0.3rem; padding-bottom: 0.3rem; border-bottom: 0.5px solid var(--border); }
+.members-section-label:first-child { margin-top: 0; }
 
 /* Mis Clubes */
 .empty-clubes { text-align: center; padding: 3rem 1rem; }

@@ -222,6 +222,13 @@ export default function Club() {
     } catch {}
   }
 
+  async function handleAceptarMiembro(userId) {
+    try {
+      await updateMember(id, userId, { estado: 'activo' })
+      loadAll()
+    } catch {}
+  }
+
   async function loadNearbyRiders() {
     if (!navigator.geolocation) {
       setNearbyError('Tu navegador no soporta geolocalización')
@@ -262,6 +269,7 @@ export default function Club() {
   const canCreateEvent = canDo(club.config_salidas || 'cualquiera', myRole)
   const canAddRoute = canDo(club.config_rutas || 'cualquiera', myRole)
   const canManageRoles = canDo(club.config_roles || 'fundador', myRole)
+  const canManageIngreso = canDo(club.config_ingreso || 'fundador', myRole)
   const isFundador = myRole === 'fundador'
 
   return (
@@ -550,71 +558,107 @@ export default function Club() {
         </div>
       )}
 
-      {tab === 'miembros' && (
-        <div>
-          {myRole && (
-            <div style={{ marginBottom: '1rem', padding: '0.85rem', background: 'var(--bg2)', border: '0.5px solid var(--border)', borderRadius: '10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: nearbyLoaded ? '0.75rem' : 0 }}>
-                <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>📍 Riders de tu club cerca</span>
-                <button
-                  className="btn-primary-sm"
-                  onClick={loadNearbyRiders}
-                  disabled={nearbyLoading}
-                >
-                  {nearbyLoading ? 'Buscando...' : nearbyLoaded ? 'Actualizar' : 'Buscar'}
-                </button>
-              </div>
-              {nearbyError && <p style={{ fontSize: '0.82rem', color: 'var(--danger)', marginTop: '0.5rem' }}>{nearbyError}</p>}
-              {nearbyLoaded && nearbyRiders.length === 0 && (
-                <p style={{ fontSize: '0.82rem', color: 'var(--text3)', marginTop: '0.5rem' }}>No hay riders de tu club a menos de 50 km</p>
-              )}
-              {nearbyRiders.map(r => (
-                <Link key={r.id} to={`/perfil/${r.id}`} className="member-row" style={{ borderBottom: 'none', padding: '0.4rem 0' }}>
-                  <div className="avatar-sm">
-                    {r.avatar_url ? <img src={r.avatar_url} alt="" /> : <span>{r.username?.slice(0,2).toUpperCase()}</span>}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>{r.username}</span>
-                    {(r.marca || r.modelo) && (
-                      <span style={{ fontSize: '0.78rem', color: 'var(--text3)', display: 'block' }}>
-                        {[r.marca, r.modelo].filter(Boolean).join(' ')}
-                      </span>
-                    )}
-                  </div>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--purple-mid)', flexShrink: 0 }}>
-                    {Math.round(r.distancia_km)} km
-                  </span>
-                </Link>
-              ))}
-            </div>
-          )}
+      {tab === 'miembros' && (() => {
+        const pendientes = club.pending_members || []
+        const ahora = new Date()
+        const hace14 = new Date(ahora.getTime() - 14 * 24 * 60 * 60 * 1000)
+        const nuevos = club.members?.filter(m => m.joined_at && new Date(m.joined_at) >= hace14) || []
+        const nuevosIds = new Set(nuevos.map(m => m.id))
+        const regulares = club.members?.filter(m => !nuevosIds.has(m.id)) || []
 
-          {club.members?.map(m => (
-            <div key={m.id} className="member-row">
-              <Link to={`/perfil/${m.id}`}>
-                <div className="avatar-sm">
-                  {m.avatar_url ? <img src={m.avatar_url} alt="" /> : <span>{m.username?.slice(0,2).toUpperCase()}</span>}
+        const renderMember = (m) => (
+          <div key={m.id} className="member-row">
+            <Link to={`/perfil/${m.id}`}>
+              <div className="avatar-sm">
+                {m.avatar_url ? <img src={m.avatar_url} alt="" /> : <span>{m.username?.slice(0,2).toUpperCase()}</span>}
+              </div>
+            </Link>
+            <span className="member-name">{m.username}</span>
+            {canManageRoles && m.id !== user?.id ? (
+              <select
+                className="role-select"
+                value={m.rol}
+                onChange={e => handleChangeRol(m.id, e.target.value)}
+              >
+                <option value="miembro">miembro</option>
+                <option value="colaborador">colaborador</option>
+                <option value="organizador">organizador</option>
+                {isFundador && <option value="fundador">fundador</option>}
+              </select>
+            ) : (
+              <span className="role-badge">{m.rol}</span>
+            )}
+          </div>
+        )
+
+        return (
+          <div>
+            {myRole && (
+              <div style={{ marginBottom: '1rem', padding: '0.85rem', background: 'var(--bg2)', border: '0.5px solid var(--border)', borderRadius: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: nearbyLoaded ? '0.75rem' : 0 }}>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>📍 Riders de tu club cerca</span>
+                  <button
+                    className="btn-primary-sm"
+                    onClick={loadNearbyRiders}
+                    disabled={nearbyLoading}
+                  >
+                    {nearbyLoading ? 'Buscando...' : nearbyLoaded ? 'Actualizar' : 'Buscar'}
+                  </button>
                 </div>
-              </Link>
-              <span className="member-name">{m.username}</span>
-              {canManageRoles && m.id !== user?.id ? (
-                <select
-                  className="role-select"
-                  value={m.rol}
-                  onChange={e => handleChangeRol(m.id, e.target.value)}
-                >
-                  <option value="miembro">miembro</option>
-                  <option value="colaborador">colaborador</option>
-                  <option value="organizador">organizador</option>
-                  {isFundador && <option value="fundador">fundador</option>}
-                </select>
-              ) : (
-                <span className="role-badge">{m.rol}</span>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+                {nearbyError && <p style={{ fontSize: '0.82rem', color: 'var(--danger)', marginTop: '0.5rem' }}>{nearbyError}</p>}
+                {nearbyLoaded && nearbyRiders.length === 0 && (
+                  <p style={{ fontSize: '0.82rem', color: 'var(--text3)', marginTop: '0.5rem' }}>No hay riders de tu club a menos de 50 km</p>
+                )}
+                {nearbyRiders.map(r => (
+                  <Link key={r.id} to={`/perfil/${r.id}`} className="member-row" style={{ borderBottom: 'none', padding: '0.4rem 0' }}>
+                    <div className="avatar-sm">
+                      {r.avatar_url ? <img src={r.avatar_url} alt="" /> : <span>{r.username?.slice(0,2).toUpperCase()}</span>}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>{r.username}</span>
+                      {(r.marca || r.modelo) && (
+                        <span style={{ fontSize: '0.78rem', color: 'var(--text3)', display: 'block' }}>
+                          {[r.marca, r.modelo].filter(Boolean).join(' ')}
+                        </span>
+                      )}
+                    </div>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--purple-mid)', flexShrink: 0 }}>
+                      {Math.round(r.distancia_km)} km
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            {canManageIngreso && pendientes.length > 0 && (
+              <>
+                <p className="members-section-label">Solicitudes pendientes</p>
+                {pendientes.map(m => (
+                  <div key={m.id} className="member-row">
+                    <Link to={`/perfil/${m.id}`}>
+                      <div className="avatar-sm">
+                        {m.avatar_url ? <img src={m.avatar_url} alt="" /> : <span>{m.username?.slice(0,2).toUpperCase()}</span>}
+                      </div>
+                    </Link>
+                    <span className="member-name">{m.username}</span>
+                    <button className="btn-primary-sm" onClick={() => handleAceptarMiembro(m.id)}>Aceptar</button>
+                  </div>
+                ))}
+              </>
+            )}
+
+            {nuevos.length > 0 && (
+              <>
+                <p className="members-section-label">Nuevos miembros</p>
+                {nuevos.map(renderMember)}
+              </>
+            )}
+
+            <p className="members-section-label">Miembros</p>
+            {regulares.map(renderMember)}
+          </div>
+        )
+      })()}
     </div>
   )
 }
