@@ -301,7 +301,7 @@ export default function Club() {
                   Configurar club
                 </button>
               )}
-              {!joined && user && (
+              {!myRole && user && (
                 <button className="btn-primary-sm" onClick={handleJoin}>
                   {club.tipo === 'privado' ? 'Solicitar unirse' : 'Unirse'}
                 </button>
